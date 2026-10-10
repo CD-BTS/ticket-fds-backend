@@ -85,9 +85,9 @@ $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'DB passwo
 .\gradlew.bat bootRun
 ```
 
-기본 HTTP 포트는 `8080`입니다. 이 초기 설정에는 User/Event Entity, Repository 및 실제 비즈니스 API가 없습니다.
+기본 HTTP 포트는 `8080`입니다. ERD의 6개 테이블에 대응하는 Entity와 Repository를 제공하며 실제 비즈니스 API는 아직 없습니다.
 
-JPA는 `ddl-auto=none`으로 테이블을 생성·변경·검증하지 않습니다. `open-in-view=false`이며 SQL 출력은 기본 비활성화입니다. 추후 Entity와 마이그레이션 설계 시 테이블 생성 정책을 결정합니다. DB 접속 정보가 빠지거나 접속할 수 없으면 애플리케이션 시작에 실패할 수 있습니다.
+JPA는 `ddl-auto=none`으로 테이블을 생성·변경·검증하지 않습니다. `open-in-view=false`이며 SQL 출력은 기본 비활성화입니다. 테이블은 `db/schema.sql`을 승인 후 수동 적용합니다. DB 접속 정보가 빠지거나 접속할 수 없으면 애플리케이션 시작에 실패할 수 있습니다.
 
 ## 빌드 및 테스트
 
@@ -106,7 +106,7 @@ MySQL 연결 통합 테스트(위 `DB_*` 환경변수와 접근 가능한 DB 필
 .\gradlew.bat mysqlTest --rerun-tasks
 ```
 
-`mysqlTest`는 `mysql` 태그만 실행합니다. 기존 기본 `@SpringBootTest`의 웹 애플리케이션 컨텍스트(MOCK)와 JPA 초기화 후 DataSource의 실제 연결에서 DB 제품이 MySQL인지 확인하고 `SELECT 1`을 실행합니다. 데이터·테이블 변경은 수행하지 않습니다. 연결 실패를 테스트 생략이나 성공으로 처리하지 않습니다.
+`mysqlTest`는 `mysql` 태그만 실행합니다. 기존 기본 `@SpringBootTest`의 웹 애플리케이션 컨텍스트(MOCK)와 JPA 초기화 후 DataSource의 실제 연결에서 DB 제품이 MySQL인지 확인하고 `SELECT 1`을 실행합니다. 연결 확인 테스트는 데이터·테이블을 변경하지 않습니다. Repository 테스트는 기존 데이터를 수정하지 않고 테스트용 행을 저장한 뒤 롤백합니다. 연결 실패를 테스트 생략이나 성공으로 처리하지 않습니다.
 
 테스트 보고서는 각각 `build/reports/tests/test/index.html`, `build/reports/tests/mysqlTest/index.html`에 생성됩니다.
 
@@ -116,3 +116,34 @@ MySQL 연결 통합 테스트(위 `DB_*` 환경변수와 접근 가능한 DB 필
 - Docker 데몬 연결 실패, 포트 충돌: Docker 및 로컬 MySQL 실행 환경 확인
 - DB 환경변수 누락, `Access denied`, `Unknown database`, 연결 거절: DB URL·계정·권한·DB 생성 여부 확인
 - Java 컴파일 오류 또는 공통 응답 테스트 실패: 코드 및 의존성 호환성 확인
+
+## DB 스키마 및 Entity 검증
+
+6개 테이블의 수동 생성 SQL은 [db/schema.sql](db/schema.sql), 매핑 설명은 [docs/erd.md](docs/erd.md)에서 관리합니다. Flyway와 자동 테이블 생성은 사용하지 않습니다.
+
+기존 MySQL에서 먼저 테이블과 FK 상태를 확인하고, 스키마 적용 승인을 받은 뒤 진행합니다. `db/schema.sql`은 빈 스키마의 최초 생성용이며 기존 테이블이 있는 DB에는 전체를 재실행하지 않습니다. DROP, TRUNCATE 및 볼륨 초기화는 사용하지 않습니다.
+
+적용 전 읽기 전용 확인 예시(비밀번호는 프롬프트에 입력):
+
+```powershell
+docker exec -it fairticket-mysql mysql -u user -p fairticket_db
+```
+
+MySQL 콘솔에서 다음을 실행합니다.
+
+```sql
+SHOW TABLES;
+SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+FROM information_schema.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = 'fairticket_db' AND REFERENCED_TABLE_NAME IS NOT NULL;
+```
+
+DDL 적용은 승인 후 SQL 클라이언트에서 수행합니다. MySQL 콘솔의 `SOURCE`는 해당 콘솔이 실행되는 시스템의 파일 경로를 사용하므로 호스트의 `db/schema.sql` 경로를 Docker 내부 콘솔에서 그대로 사용할 수 없습니다.
+
+DB 없는 빌드에는 SQL과 Hibernate 매핑 비교가 포함됩니다. `mysqlTest`에는 기존 연결 확인과 6개 Repository 저장·조회 테스트가 포함됩니다. Repository 테스트에만 `ddl-auto=validate`를 적용하여 테이블을 생성하지 않고 검사합니다. 테스트 데이터는 트랜잭션 롤백되지만 AUTO_INCREMENT 번호는 소비될 수 있습니다.
+
+```powershell
+.\gradlew.bat build
+# 위에서 DB_* 환경변수를 설정한 터미널에서 실행
+.\gradlew.bat mysqlTest --rerun-tasks
+```
