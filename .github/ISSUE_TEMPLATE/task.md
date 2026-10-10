@@ -1,6 +1,6 @@
 ---
 name: "Task (작업 태스크)"
-description: "기능 개발, 문서 작업 등 개별 작업을 등록합니다."
+about: 백엔드 작업을 위한 이슈 템플릿
 title: "[TASK] "
 labels: []
 assignees: ""
