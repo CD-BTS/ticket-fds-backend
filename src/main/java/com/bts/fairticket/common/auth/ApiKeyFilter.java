@@ -33,7 +33,8 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = new UrlPathHelper().getPathWithinApplication(request);
-		return !path.equals("/api/v1/users") && !path.startsWith("/api/v1/users/");
+		return !path.equals("/api/v1/users") && !path.startsWith("/api/v1/users/")
+				&& !path.equals("/api/v1/events") && !path.startsWith("/api/v1/events/");
 	}
 
 	@Override

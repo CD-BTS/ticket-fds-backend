@@ -105,3 +105,80 @@ X-API-Key: <동일 서비스의 키>
 단위·MVC 테스트는 API 인증, 검증, 상태·응답 코드 및 서비스 접근 범위를 검증합니다. MySQL 테스트는 실제 등록·조회·재등록, 기존 Credit 유지, Credit 실패 롤백 및 병렬 등록을 검증합니다.
 
 기존 트랜잭션 롤백 테스트를 유지합니다. 신규 사용자 API 테스트는 독립 트랜잭션으로 커밋되는 데이터를 검증하므로 실행마다 임의 서비스 ID를 만들고 해당 서비스의 사용자·Credit 행만 테스트 종료 시 정리합니다. DB 스키마·기존 사용자·Docker 볼륨은 변경하지 않습니다.
+
+## 행동 이벤트 수집 — POST /api/v1/events
+
+사용자 API와 동일한 `X-API-Key` 인증을 사용합니다. 인증 서비스와 본문의 `service_id`가 다르면 403입니다. `user_id`가 없거나 다른 서비스의 사용자라면 동일하게 404로 응답합니다.
+
+```http
+POST /api/v1/events
+Content-Type: application/json
+X-API-Key: <서비스에 발급한 키>
+```
+
+```json
+{
+  "service_id": "ticket-service-a",
+  "external_event_id": "booking-event-123",
+  "user_id": "c4825ba5-5692-44eb-9882-a8abf733008e",
+  "event_type": "BOOKING",
+  "booking_id": "booking-123",
+  "occurred_at": "2026-10-10T19:30:00",
+  "metadata": {
+    "bookingDurationSeconds": 12.5,
+    "deviceChanged": false
+  }
+}
+```
+
+| 필드 | 조건 |
+| --- | --- |
+| service_id | 필수, 공백 불가, 최대 50자, 인증 서비스와 일치 |
+| external_event_id | 필수, 공백 불가, 최대 100자 |
+| user_id | 필수, 공백 불가, 최대 50자, 같은 서비스의 BTS 사용자 |
+| event_type | 필수, BOOKING / CANCEL / CHECK_IN만 허용 |
+| booking_id | 최대 100자, BOOKING·CANCEL에서는 필수이며 공백 불가 |
+| ticket_id | 최대 100자, CHECK_IN에서는 필수이며 공백 불가 |
+| occurred_at | 필수, 정확히 yyyy-MM-dd'T'HH:mm:ss, 유효한 날짜·시각, MySQL DATETIME 범위(1000~9999년) |
+| metadata | 선택, JSON 객체 또는 null, 중첩 객체·배열 지원 |
+
+모든 외부 서비스는 **Asia/Seoul 기준 시각**을 전달합니다. 시간대 변환 없이 해당 값을 MySQL `DATETIME`에 저장합니다. 소수 초, `Z`, `+09:00` 등의 시간대 표기, 초가 생략된 문자열은 400입니다. `occurred_at`은 실제 외부 행동 발생 시각이며 서버 수신 시각으로 덮어쓰지 않습니다. 현재 스키마에는 별도 수신 시각 컬럼이 없습니다.
+
+신규 저장은 **201 / COMMON_201**입니다.
+
+```json
+{
+  "success": true,
+  "code": "COMMON_201",
+  "data": {
+    "event_id": 1,
+    "service_id": "ticket-service-a",
+    "external_event_id": "booking-event-123",
+    "user_id": "c4825ba5-5692-44eb-9882-a8abf733008e",
+    "event_type": "BOOKING",
+    "booking_id": "booking-123",
+    "ticket_id": null,
+    "occurred_at": "2026-10-10T19:30:00",
+    "metadata": {
+      "bookingDurationSeconds": 12.5,
+      "deviceChanged": false
+    }
+  },
+  "message": "요청이 성공했습니다."
+}
+```
+
+멱등성 키는 `(service_id, external_event_id)`입니다. 동일 키에서 사용자·유형·예약 ID·티켓 ID·발생 시각·metadata가 같으면 **200 / COMMON_200**으로 기존 이벤트를 반환합니다. 하나라도 다르면 **409 / COMMON_409**이며 기존 데이터를 변경하지 않습니다. JSON 객체의 키 순서는 중첩 깊이와 관계없이 무시하며 배열 순서는 유지합니다. 숫자는 값으로 비교하므로 `1`과 `1.0`은 같습니다. metadata의 null과 빈 객체는 다릅니다. 문자열은 임의로 trim하거나 변경하지 않으며 멱등성 키의 조회는 기존 MySQL UNIQUE 제약의 문자열 비교 규칙을 따릅니다.
+
+동시 요청은 기존 UNIQUE 제약으로 보호합니다. 충돌한 저장 트랜잭션의 롤백 후 새 트랜잭션에서 저장된 이벤트와 요청 내용을 비교하여 같은 정책을 적용합니다. 복구할 이벤트가 없는 DB 제약조건 충돌은 409입니다. 이번 API는 이벤트만 저장하며 Credit·위험·정책 데이터는 변경하지 않습니다.
+
+| 오류 | HTTP / code |
+| --- | --- |
+| 필수값·유형·길이·날짜 형식·JSON 오류 | 400 / COMMON_400 |
+| 키 누락·잘못된 키·복수 키 헤더 | 401 / COMMON_401 |
+| 인증 서비스와 service_id 불일치 | 403 / COMMON_403 |
+| 사용자 없음·타 서비스 사용자 | 404 / COMMON_404 |
+| 동일 키의 내용 충돌·복구 불가능한 DB 제약조건 오류 | 409 / COMMON_409 |
+| 예상하지 못한 내부 오류 | 500 / COMMON_500 |
+
+기존 `build` 및 `mysqlTest` 명령에 이벤트 테스트가 포함됩니다. MySQL 테스트는 BOOKING·CANCEL·CHECK_IN 저장, JSON과 발생 시각 조회, 재전송 및 내용 충돌, 인증·사용자 검증, 동일/다른 내용의 동시 요청을 검증합니다. 실행별 임의 서비스의 이벤트를 먼저 정리하고 해당 테스트 사용자·Credit을 정리합니다. 기존 데이터와 테이블·볼륨은 초기화하지 않습니다. AUTO_INCREMENT 번호는 테스트 실행 중 소비될 수 있습니다.
