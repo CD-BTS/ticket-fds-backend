@@ -107,7 +107,7 @@ class EntitySchemaMappingTests {
 			Map<String, String> actualIndexes = new TreeMap<>();
 			tables.forEach((name, table) -> {
 				table.getIndexes().forEach((indexName, index) -> actualIndexes.put(name + "." + indexName,
-						(index.isUnique() ? "unique:" : "index:") + String.join(",", columnNames(index.getColumns()))));
+						(index.isUnique() ? "unique:" : "index:") + String.join(",", columnNames(index.getSelectables().stream().map(Column.class::cast).toList()))));
 				table.getUniqueKeys().forEach((keyName, key) -> actualIndexes.put(name + "." + keyName,
 						"unique:" + String.join(",", columnNames(key.getColumns()))));
 			});
