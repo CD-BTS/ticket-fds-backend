@@ -85,7 +85,7 @@ $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'DB passwo
 .\gradlew.bat bootRun
 ```
 
-기본 HTTP 포트는 `8080`입니다. ERD의 6개 테이블에 대응하는 Entity와 Repository를 제공하며 실제 비즈니스 API는 아직 없습니다.
+기본 HTTP 포트는 `8080`입니다. ERD의 6개 테이블에 대응하는 Entity와 Repository를 제공하며 사용자 등록·조회 API는 [docs/api-spec.md](docs/api-spec.md)를 참고하세요.
 
 JPA는 `ddl-auto=none`으로 테이블을 생성·변경·검증하지 않습니다. `open-in-view=false`이며 SQL 출력은 기본 비활성화입니다. 테이블은 `db/schema.sql`을 승인 후 수동 적용합니다. DB 접속 정보가 빠지거나 접속할 수 없으면 애플리케이션 시작에 실패할 수 있습니다.
 
@@ -147,3 +147,23 @@ DB 없는 빌드에는 SQL과 Hibernate 매핑 비교가 포함됩니다. `mysql
 # 위에서 DB_* 환경변수를 설정한 터미널에서 실행
 .\gradlew.bat mysqlTest --rerun-tasks
 ```
+
+## 사용자 API 인증 설정
+
+사용자 API에는 서비스별 `X-API-Key` 인증이 필요합니다. `BTS_API_KEY_HASHES` 환경변수에 서비스 ID와 발급 키의 SHA-256 해시를 매핑한 JSON 객체를 지정합니다. 기본값 `{}`에서는 모든 사용자 API 요청이 거부됩니다. 운영용 키 원문은 코드·Git·로그에 기록하지 않습니다.
+
+기존 `.env`를 덮어쓰지 않습니다. Spring Boot는 `.env`를 자동으로 읽지 않으므로 환경변수를 실행 터미널이나 IDE에 별도로 설정합니다. 키 해시를 생성하는 PowerShell 예시:
+
+```powershell
+$clientApiKey = [System.Net.NetworkCredential]::new('', (Read-Host '서비스에 발급한 API Key' -AsSecureString)).Password
+$sha256 = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $keyHash = [BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($clientApiKey))).Replace('-', '').ToLowerInvariant()
+} finally {
+    $sha256.Dispose()
+}
+$env:BTS_API_KEY_HASHES = @{ 'ticket-service-a' = $keyHash } | ConvertTo-Json -Compress
+.\gradlew.bat bootRun
+```
+
+서비스 ID는 요청 본문의 `service_id`와 일치해야 합니다. 다른 서비스의 사용자는 조회할 수 없습니다. 운영 요청에는 HTTPS를 사용하고 프록시에서도 인증 헤더 로깅을 비활성화합니다. 요청·응답·상태 코드는 [API 명세](docs/api-spec.md)에 정리되어 있습니다.
