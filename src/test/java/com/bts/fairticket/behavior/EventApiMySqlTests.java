@@ -120,6 +120,47 @@ class EventApiMySqlTests {
 	}
 
 	@Test
+	void registeredExternalUserMapsToInternalUuidForAllEventTypes() throws Exception {
+		String externalUser = "U0001";
+		String registration = mapper.writeValueAsString(Map.of(
+				"serviceId", SERVICE_A, "externalUserId", externalUser));
+		String json = mvc.perform(post("/api/v1/users").header("X-API-Key", KEY_A)
+				.contentType("application/json").content(registration))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.code").value("COMMON_201"))
+				.andExpect(jsonPath("$.data.externalUserId").value(externalUser))
+				.andReturn().getResponse().getContentAsString();
+		String internalId = mapper.readTree(json).get("data").get("userId").asString();
+		assertEquals(internalId, UUID.fromString(internalId).toString());
+		assertNotEquals(externalUser, internalId);
+		mvc.perform(post("/api/v1/users").header("X-API-Key", KEY_A)
+				.contentType("application/json").content(registration))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value("COMMON_200"))
+				.andExpect(jsonPath("$.data.userId").value(internalId));
+		for (EventType type : EventType.values()) {
+			var event = new EventRequest(SERVICE_A, "csv-flow-" + type, internalId, type,
+					type == EventType.CHECK_IN ? null : "booking-1",
+					type == EventType.CHECK_IN ? "ticket-1" : null,
+					"2026-09-13T16:53:52+00:00", Map.of("source", "integration-test"));
+			String result = mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A)
+					.contentType("application/json").content(mapper.writeValueAsString(event)))
+					.andExpect(status().isCreated())
+					.andExpect(jsonPath("$.data.userId").value(internalId))
+					.andExpect(jsonPath("$.data.eventType").value(type.name()))
+					.andExpect(jsonPath("$.data.occurredAt").value("2026-09-13T16:53:52Z"))
+					.andReturn().getResponse().getContentAsString();
+			long eventId = mapper.readTree(result).get("data").get("eventId").asLong();
+			assertEquals(internalId, jdbc.queryForObject(
+					"SELECT user_id FROM behavior_event WHERE event_id=?", String.class, eventId));
+		}
+		assertEquals(3, eventCount());
+		assertEquals(1, jdbc.queryForObject(
+				"SELECT COUNT(*) FROM user_account WHERE service_id=? AND external_user_id=?",
+				Integer.class, SERVICE_A, externalUser));
+	}
+
+	@Test
 	void offsetVariantsReplayTheSameInstantAndStoreUtc() throws Exception {
 		String external = UUID.randomUUID().toString();
 		Long eventId = null;
