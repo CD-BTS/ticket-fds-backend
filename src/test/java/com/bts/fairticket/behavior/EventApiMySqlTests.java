@@ -91,7 +91,9 @@ class EventApiMySqlTests {
 		return new EventRequest(SERVICE_A, external, userId, type,
 				type == EventType.CHECK_IN ? null : "booking", type == EventType.CHECK_IN ? "ticket" : null,
 				"2026-10-10T19:30:00", Map.of("device", Map.of("changed", false, "count", 3),
-						"steps", List.of("select", "pay"), "duration", 12.5));
+						"steps", List.of("select", "pay"), "duration", 12.5,
+						"bookingDurationSeconds", 0.25, "deviceChanged", false,
+						"custom_key", Map.of("nested_key", "original")));
 	}
 
 	@ParameterizedTest
@@ -101,11 +103,11 @@ class EventApiMySqlTests {
 		String response = mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A)
 				.contentType("application/json").content(mapper.writeValueAsString(request)))
 				.andExpect(status().isCreated()).andExpect(jsonPath("$.code").value("COMMON_201"))
-				.andExpect(jsonPath("$.data.event_type").value(type.name()))
-				.andExpect(jsonPath("$.data.occurred_at").value(request.occurredAt()))
+				.andExpect(jsonPath("$.data.eventType").value(type.name()))
+				.andExpect(jsonPath("$.data.occurredAt").value(request.occurredAt()))
 				.andExpect(jsonPath("$.data.metadata.device.changed").value(false))
 				.andReturn().getResponse().getContentAsString();
-		long id = mapper.readTree(response).get("data").get("event_id").asLong();
+		long id = mapper.readTree(response).get("data").get("eventId").asLong();
 		var saved = events.findById(id).orElseThrow();
 		assertEquals(request.occurrenceTime(), saved.getOccurredAt());
 		assertEquals(request.bookingId(), saved.getBookingId());
@@ -125,13 +127,36 @@ class EventApiMySqlTests {
 		metadata.put("duration", 12.5);
 		metadata.put("steps", List.of("select", "pay"));
 		metadata.put("device", Map.of("count", 3L, "changed", false));
+		metadata.put("bookingDurationSeconds", 0.25);
+		metadata.put("deviceChanged", false);
+		metadata.put("custom_key", Map.of("nested_key", "original"));
 		var replay = new EventRequest(SERVICE_A, request.externalEventId(), userId, EventType.BOOKING,
 				"booking", null, request.occurredAt(), metadata);
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
 				.content(mapper.writeValueAsString(replay)))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.code").value("COMMON_200"))
-				.andExpect(jsonPath("$.data.event_id").value(first.event().eventId()));
+				.andExpect(jsonPath("$.data.eventId").value(first.event().eventId()));
 		assertEquals(1, eventCount());
+	}
+
+	@Test
+	void invalidMetadataIsRejectedBeforeDatabaseSaveAndOriginalKeysAreReturned() throws Exception {
+		for (Map<String, Object> metadata : List.<Map<String, Object>>of(
+				Map.of("bookingDurationSeconds", -1), Map.of("bookingDurationSeconds", "3"),
+				Map.of("deviceChanged", "false"))) {
+			var original = request(EventType.BOOKING, UUID.randomUUID().toString());
+			var invalid = new EventRequest(SERVICE_A, original.externalEventId(), userId, EventType.BOOKING,
+					"booking", null, original.occurredAt(), metadata);
+			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
+					.content(mapper.writeValueAsString(invalid)))
+					.andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+				.andExpect(jsonPath("$.message").value("요청 데이터가 올바르지 않습니다."));
+		}
+		assertEquals(0, eventCount());
+		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
+				.content(mapper.writeValueAsString(request(EventType.BOOKING, UUID.randomUUID().toString()))))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.data.metadata.custom_key.nested_key").value("original"));
 	}
 
 	@Test
@@ -142,7 +167,8 @@ class EventApiMySqlTests {
 				"booking", null, request.occurredAt(), Map.of("changed", true));
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
 				.content(mapper.writeValueAsString(changed)))
-				.andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("COMMON_409"));
+				.andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("EVENT_ALREADY_EXISTS"))
+				.andExpect(jsonPath("$.message").value("동일한 이벤트 식별자로 서로 다른 내용이 요청되었습니다."));
 		var saved = events.findById(first.event().eventId()).orElseThrow();
 		assertEquals("BOOKING", saved.getEventType());
 		assertEquals(request.metadata(), saved.getMetadata());
@@ -158,21 +184,28 @@ class EventApiMySqlTests {
 					"booking", null, "2026-10-10T19:30:00", null);
 			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
 					.content(mapper.writeValueAsString(request)))
-					.andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("COMMON_404"));
+					.andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+				.andExpect(jsonPath("$.message").value("해당 사용자를 찾을 수 없습니다."));
 		}
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_B).contentType("application/json")
 				.content(mapper.writeValueAsString(request(EventType.BOOKING, "external"))))
-				.andExpect(status().isForbidden());
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.code").value("FORBIDDEN"))
+				.andExpect(jsonPath("$.message").value("접근 권한이 없습니다."));
 		assertEquals(0, eventCount());
 	}
 
 	@Test
 	void rejectsMissingAndInvalidKeysWithoutSaving() throws Exception {
 		mvc.perform(post("/api/v1/events").contentType("application/json").content("{}"))
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+				.andExpect(jsonPath("$.message").value("인증이 필요합니다."));
 		mvc.perform(post("/api/v1/events").header("X-API-Key", ApiKeyTestSupport.randomKey())
 				.contentType("application/json").content(mapper.writeValueAsString(request(EventType.BOOKING, "external"))))
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+				.andExpect(jsonPath("$.message").value("인증이 필요합니다."));
 		assertEquals(0, eventCount());
 	}
 
@@ -195,7 +228,7 @@ class EventApiMySqlTests {
 		synchronizeInitialReads(first.externalEventId(), 2);
 		var results = concurrent(List.of(first, second));
 		assertEquals(1, results.stream().filter(RegistrationResult.class::isInstance).count());
-		assertEquals(1, results.stream().filter(result -> result == ResponseCode.CONFLICT).count());
+		assertEquals(1, results.stream().filter(result -> result == ResponseCode.EVENT_ALREADY_EXISTS).count());
 		assertEquals(1, eventCount());
 	}
 

@@ -1,6 +1,7 @@
 package com.bts.fairticket.user.entity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -49,5 +50,10 @@ public class UserAccount {
 		this.userId = userId;
 		this.serviceId = serviceId;
 		this.externalUserId = externalUserId;
+	}
+
+	public UserAccount(String userId, String serviceId, String externalUserId, String accountStatus) {
+		this(userId, serviceId, externalUserId);
+		this.accountStatus = Objects.requireNonNull(accountStatus);
 	}
 }

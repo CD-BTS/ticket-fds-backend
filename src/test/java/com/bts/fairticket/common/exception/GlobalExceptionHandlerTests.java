@@ -53,7 +53,7 @@ class GlobalExceptionHandlerTests {
 		mockMvc.perform(post("/test/requests").contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.success").value(false))
-				.andExpect(jsonPath("$.code").value("COMMON_400"))
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
 				.andExpect(jsonPath("$.data.errors[0].field").value("name"))
 				.andExpect(jsonPath("$.data.errors[0].message").value("이름은 필수입니다."))
 				.andExpect(jsonPath("$.data.errors[0].rejectedValue").doesNotExist());
@@ -63,29 +63,29 @@ class GlobalExceptionHandlerTests {
 	void handlesMalformedJson() throws Exception {
 		mockMvc.perform(post("/test/requests").contentType(MediaType.APPLICATION_JSON).content("{"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.code").value("COMMON_400"))
-				.andExpect(jsonPath("$.message").value("잘못된 요청입니다."));
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+				.andExpect(jsonPath("$.message").value("요청 데이터가 올바르지 않습니다."));
 	}
 
 	@Test
 	void handlesWrongParameterType() throws Exception {
 		mockMvc.perform(get("/test/number").param("value", "invalid"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.code").value("COMMON_400"));
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 	}
 
 	@Test
 	void handlesMissingParameter() throws Exception {
 		mockMvc.perform(get("/test/number"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.code").value("COMMON_400"));
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 	}
 
 	@Test
 	void handlesMethodParameterValidation() throws Exception {
 		mockMvc.perform(get("/test/number").param("value", "0"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.code").value("COMMON_400"))
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
 				.andExpect(jsonPath("$.data.errors[0].field").value("value"))
 				.andExpect(jsonPath("$.data.errors[0].message").value("1 이상이어야 합니다."));
 	}
@@ -95,21 +95,21 @@ class GlobalExceptionHandlerTests {
 		mockMvc.perform(get("/test/requests"))
 				.andExpect(status().isMethodNotAllowed())
 				.andExpect(header().string("Allow", containsString("POST")))
-				.andExpect(jsonPath("$.code").value("COMMON_405"));
+				.andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
 	}
 
 	@Test
 	void handlesUnsupportedContentType() throws Exception {
 		mockMvc.perform(post("/test/requests").contentType(MediaType.TEXT_PLAIN).content("ticket"))
 				.andExpect(status().isUnsupportedMediaType())
-				.andExpect(jsonPath("$.code").value("COMMON_415"));
+				.andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
 	}
 
 	@Test
 	void handlesUnknownPath() throws Exception {
 		mockMvc.perform(get("/test/missing"))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.code").value("COMMON_404"));
+				.andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
 	}
 
 	@Test
@@ -117,7 +117,7 @@ class GlobalExceptionHandlerTests {
 		mockMvc.perform(get("/test/conflict"))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.success").value(false))
-				.andExpect(jsonPath("$.code").value("COMMON_409"));
+				.andExpect(jsonPath("$.code").value("DATA_CONFLICT"));
 	}
 
 	@Test
@@ -125,7 +125,7 @@ class GlobalExceptionHandlerTests {
 		mockMvc.perform(get("/test/error"))
 				.andExpect(status().isInternalServerError())
 				.andExpect(jsonPath("$.success").value(false))
-				.andExpect(jsonPath("$.code").value("COMMON_500"))
+				.andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
 				.andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."))
 				.andExpect(jsonPath("$.data").isEmpty());
 	}
@@ -134,7 +134,7 @@ class GlobalExceptionHandlerTests {
 	void treatsNonMvcConstraintViolationAsServerError() throws Exception {
 		mockMvc.perform(get("/test/constraint-error"))
 				.andExpect(status().isInternalServerError())
-				.andExpect(jsonPath("$.code").value("COMMON_500"))
+				.andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
 				.andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."))
 				.andExpect(jsonPath("$.data").isEmpty());
 	}
@@ -142,7 +142,7 @@ class GlobalExceptionHandlerTests {
 	void treatsInvalidReturnValueAsServerError() throws Exception {
 		mockMvc.perform(get("/test/invalid-result"))
 				.andExpect(status().isInternalServerError())
-				.andExpect(jsonPath("$.code").value("COMMON_500"))
+				.andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
 				.andExpect(jsonPath("$.data").isEmpty());
 	}
 
@@ -164,7 +164,7 @@ class GlobalExceptionHandlerTests {
 
 		@GetMapping("/conflict")
 		public void conflict() {
-			throw new ApiException(ResponseCode.CONFLICT);
+			throw new ApiException(ResponseCode.DATA_CONFLICT);
 		}
 
 		@GetMapping("/error")

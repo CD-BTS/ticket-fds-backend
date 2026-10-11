@@ -8,12 +8,12 @@ import com.bts.fairticket.credit.entity.UserCredit;
 import com.bts.fairticket.user.entity.UserAccount;
 
 public record UserResponse(
-		@JsonProperty("user_id") String userId,
-		@JsonProperty("service_id") String serviceId,
-		@JsonProperty("external_user_id") String externalUserId,
-		@JsonProperty("account_status") String accountStatus,
-		@JsonProperty("created_at") LocalDateTime createdAt,
-		@JsonProperty("credit_score") Integer creditScore,
+		@JsonProperty("userId") String userId,
+		@JsonProperty("serviceId") String serviceId,
+		@JsonProperty("externalUserId") String externalUserId,
+		@JsonProperty("accountStatus") String accountStatus,
+		@JsonProperty("createdAt") LocalDateTime createdAt,
+		@JsonProperty("creditScore") Integer creditScore,
 		String tier) {
 
 	public static UserResponse from(UserAccount user, UserCredit credit) {

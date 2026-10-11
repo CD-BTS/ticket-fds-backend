@@ -36,7 +36,7 @@ public class UserRegistrationTransaction {
 			return existingResult(existing.get());
 		}
 		UserAccount user = userRepository.saveAndFlush(new UserAccount(
-				UUID.randomUUID().toString(), request.serviceId(), request.externalUserId()));
+				UUID.randomUUID().toString(), request.serviceId(), request.externalUserId(), request.accountStatus()));
 		UserCredit credit = creditRepository.saveAndFlush(new UserCredit(user));
 		return new RegistrationResult(UserResponse.from(user, credit), true);
 	}

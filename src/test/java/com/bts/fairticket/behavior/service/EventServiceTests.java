@@ -66,7 +66,7 @@ class EventServiceTests {
 			when(users.findById("user")).thenReturn(user);
 			var error = assertThrows(ApiException.class,
 					() -> new EventRegistrationTransaction(events, users).register(request(EventType.BOOKING)));
-			assertEquals(ResponseCode.NOT_FOUND, error.getResponseCode());
+			assertEquals(ResponseCode.USER_NOT_FOUND, error.getResponseCode());
 		}
 		verifyNoInteractions(events);
 	}
@@ -115,7 +115,7 @@ class EventServiceTests {
 				new BehaviorEvent(user, "service", "external", "BOOKING", "booking", null, request.occurrenceTime(), Map.of("changed", true)));
 		changed.forEach(saved -> {
 			when(events.findByServiceIdAndExternalEventId("service", "external")).thenReturn(Optional.of(saved));
-			assertEquals(ResponseCode.CONFLICT, assertThrows(ApiException.class,
+			assertEquals(ResponseCode.EVENT_ALREADY_EXISTS, assertThrows(ApiException.class,
 					() -> new EventRegistrationTransaction(events, users).findExisting(request)).getResponseCode());
 		});
 		verify(events, never()).saveAndFlush(any());
@@ -139,7 +139,7 @@ class EventServiceTests {
 		var request = request(EventType.BOOKING);
 		when(transaction.register(request)).thenThrow(new DataIntegrityViolationException("test constraint"));
 		when(transaction.findExisting(request)).thenReturn(Optional.empty());
-		assertEquals(ResponseCode.CONFLICT, assertThrows(ApiException.class,
+		assertEquals(ResponseCode.DATA_CONFLICT, assertThrows(ApiException.class,
 				() -> new EventService(transaction).collect(request, "service")).getResponseCode());
 	}
 }

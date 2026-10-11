@@ -63,7 +63,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		// Spring MVC의 상태와 Allow 등의 응답 헤더를 보존하고 본문만 공통 형식으로 변환한다.
 		Object data = body instanceof Map<?, ?> ? body : null;
 		return super.handleExceptionInternal(exception,
-				ApiResponse.failure(status, data, ResponseCode.messageFor(status)), headers, status, request);
+				ApiResponse.failure(status, data), headers, status, request);
 	}
 
 	@ExceptionHandler(ApiException.class)

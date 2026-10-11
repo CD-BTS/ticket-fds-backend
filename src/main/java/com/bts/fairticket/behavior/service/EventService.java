@@ -23,7 +23,7 @@ public class EventService {
 			return transaction.register(request);
 		} catch (DataIntegrityViolationException exception) {
 			return transaction.findExisting(request)
-					.orElseThrow(() -> new ApiException(ResponseCode.CONFLICT));
+					.orElseThrow(() -> new ApiException(ResponseCode.DATA_CONFLICT));
 		}
 	}
 }
