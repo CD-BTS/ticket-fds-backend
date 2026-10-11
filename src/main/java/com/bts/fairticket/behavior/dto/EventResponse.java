@@ -1,6 +1,6 @@
 package com.bts.fairticket.behavior.dto;
 
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.bts.fairticket.behavior.entity.BehaviorEvent;
@@ -19,7 +19,7 @@ public record EventResponse(
 	public static EventResponse from(BehaviorEvent event) {
 		return new EventResponse(event.getEventId(), event.getServiceId(), event.getExternalEventId(),
 				event.getUser().getUserId(), event.getEventType(), event.getBookingId(), event.getTicketId(),
-				event.getOccurredAt().format(DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss")),
+				event.getOccurredAt().toInstant(ZoneOffset.UTC).toString(),
 				event.getMetadata());
 	}
 }

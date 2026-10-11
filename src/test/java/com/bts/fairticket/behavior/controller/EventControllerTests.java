@@ -47,7 +47,7 @@ class EventControllerTests {
 	private Map<String, Object> body() {
 		return new LinkedHashMap<>(Map.of("serviceId", "service-a", "externalEventId", "external",
 				"userId", "user", "eventType", "BOOKING", "bookingId", "booking",
-				"occurredAt", "2026-10-10T19:30:00", "metadata", Map.of("duration", 10)));
+				"occurredAt", "2026-10-10T19:30:00Z", "metadata", Map.of("duration", 10)));
 	}
 
 	@Test
@@ -55,7 +55,7 @@ class EventControllerTests {
 		Object[][] errors = {
 				{ResponseCode.USER_NOT_FOUND, 404, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."},
 				{ResponseCode.FORBIDDEN, 403, "FORBIDDEN", "접근 권한이 없습니다."},
-				{ResponseCode.EVENT_ALREADY_EXISTS, 409, "EVENT_ALREADY_EXISTS", "동일한 이벤트 식별자로 서로 다른 내용이 요청되었습니다."}
+				{ResponseCode.DATA_CONFLICT, 409, "DATA_CONFLICT", "요청이 현재 리소스 상태와 충돌합니다."}
 		};
 		for (Object[] error : errors) {
 			when(service.collect(any(), eq("service-a"))).thenThrow(new ApiException((ResponseCode) error[0]));
@@ -87,13 +87,13 @@ class EventControllerTests {
 			}
 			var response = new EventResponse(1L, "service-a", "external", "user", type,
 					(String) body.get("bookingId"), (String) body.get("ticketId"),
-					"2026-10-10T19:30:00", Map.of("duration", 10));
+					"2026-10-10T19:30:00Z", Map.of("duration", 10));
 			when(service.collect(any(), eq("service-a"))).thenReturn(new RegistrationResult(response, true));
 			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY).contentType("application/json")
 					.content(mapper.writeValueAsString(body)))
 					.andExpect(status().isCreated()).andExpect(jsonPath("$.code").value("COMMON_201"))
 					.andExpect(jsonPath("$.data.eventType").value(type))
-					.andExpect(jsonPath("$.data.occurredAt").value("2026-10-10T19:30:00"));
+					.andExpect(jsonPath("$.data.occurredAt").value("2026-10-10T19:30:00Z"));
 		}
 	}
 
@@ -128,7 +128,7 @@ class EventControllerTests {
 			var request = body();
 			request.put("metadata", metadata);
 			var response = new EventResponse(1L, "service-a", "external", "user", "BOOKING", "booking", null,
-					"2026-10-10T19:30:00", metadata);
+					"2026-10-10T19:30:00Z", metadata);
 			when(service.collect(any(), eq("service-a"))).thenReturn(new RegistrationResult(response, true));
 			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY).contentType("application/json")
 					.content(mapper.writeValueAsString(request)))
@@ -145,7 +145,7 @@ class EventControllerTests {
 	void rejectsLegacySnakeCaseEventRequests() throws Exception {
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY).contentType("application/json")
 				.content("{\"service_id\":\"service-a\",\"external_event_id\":\"external\",\"user_id\":\"user\","
-						+ "\"event_type\":\"BOOKING\",\"booking_id\":\"booking\",\"occurred_at\":\"2026-10-10T19:30:00\"}"))
+						+ "\"event_type\":\"BOOKING\",\"booking_id\":\"booking\",\"occurred_at\":\"2026-10-10T19:30:00Z\"}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
 				.andExpect(jsonPath("$.message").value("요청 데이터가 올바르지 않습니다."));
@@ -155,13 +155,13 @@ class EventControllerTests {
 	@Test
 	void returns200ForReplayAndCommonErrorStatuses() throws Exception {
 		var response = new EventResponse(1L, "service-a", "external", "user", "BOOKING",
-				"booking", null, "2026-10-10T19:30:00", null);
+				"booking", null, "2026-10-10T19:30:00Z", null);
 		when(service.collect(any(), eq("service-a"))).thenReturn(new RegistrationResult(response, false));
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY).contentType("application/json")
 				.content(mapper.writeValueAsString(body())))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.code").value("COMMON_200"));
 		for (var code : new ResponseCode[] {ResponseCode.USER_NOT_FOUND, ResponseCode.FORBIDDEN,
-				ResponseCode.EVENT_ALREADY_EXISTS, ResponseCode.DATA_CONFLICT}) {
+				ResponseCode.DATA_CONFLICT}) {
 			when(service.collect(any(), eq("service-a"))).thenThrow(new ApiException(code));
 			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY).contentType("application/json")
 					.content(mapper.writeValueAsString(body())))
@@ -216,10 +216,11 @@ class EventControllerTests {
 	}
 
 	@Test
-	void rejectsFractionalSecondsOffsetsAndInvalidCalendarDates() throws Exception {
-		for (String time : new String[] {"2026-10-10T19:30:00.000", "2026-10-10T19:30:00Z",
-				"2026-10-10T19:30:00+09:00", "2026-02-30T19:30:00", "2026-10-10T24:00:00",
-				"2026-10-10T19:30", "0999-10-10T19:30:00"}) {
+	void rejectsMissingOffsetsFractionalPrecisionAndInvalidDates() throws Exception {
+		for (String time : new String[] {"2026-10-10T19:30:00", "2026-10-10T19:30:00.123Z",
+				"2026-10-10T19:30:00+19:00", "2026-02-30T19:30:00Z", "2026-10-10T24:00:00Z",
+				"2026-10-10T19:30", "0999-10-10T19:30:00Z",
+				"1000-01-01T00:00:00+09:00", "9999-12-31T23:59:59-01:00"}) {
 			var body = body();
 			body.put("occurredAt", time);
 			badRequest(body);

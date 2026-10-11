@@ -56,7 +56,7 @@ public class EventRegistrationTransaction {
 							|| !Objects.equals(event.getTicketId(), request.ticketId())
 							|| !event.getOccurredAt().equals(request.occurrenceTime())
 							|| !sameJson(event.getMetadata(), request.metadata())) {
-						throw new ApiException(ResponseCode.EVENT_ALREADY_EXISTS);
+						throw new ApiException(ResponseCode.DATA_CONFLICT);
 					}
 					return new RegistrationResult(EventResponse.from(event), false);
 				});

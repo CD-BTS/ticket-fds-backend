@@ -36,7 +36,7 @@ class EventServiceTests {
 		return new EventRequest("service", "external", "user", type,
 				type == EventType.CHECK_IN ? null : "booking",
 				type == EventType.CHECK_IN ? "ticket" : null,
-				"2026-10-10T19:30:00", Map.of("object", Map.of("a", 1, "b", 2)));
+				"2026-10-10T19:30:00Z", Map.of("object", Map.of("a", 1, "b", 2)));
 	}
 
 	private BehaviorEvent event(EventRequest request) {
@@ -57,6 +57,23 @@ class EventServiceTests {
 		assertEquals(type.name(), result.event().eventType());
 		assertEquals(request.occurredAt(), result.event().occurredAt());
 		assertEquals(request.metadata(), result.event().metadata());
+	}
+
+	@Test
+	void offsetsNormalizeToUtcAndReplayWithoutSaving() {
+		var utc = new EventRequest("service", "external", "user", EventType.BOOKING, "booking", null,
+				"2026-09-13T16:53:52+00:00", Map.of());
+		var seoul = new EventRequest("service", "external", "user", EventType.BOOKING, "booking", null,
+				"2026-09-14T01:53:52+09:00", Map.of());
+		assertTrue(utc.isOccurrenceTimeValid());
+		assertTrue(seoul.isOccurrenceTimeValid());
+		assertEquals(utc.occurrenceTime(), seoul.occurrenceTime());
+		assertEquals(LocalDateTime.of(2026, 9, 13, 16, 53, 52), utc.occurrenceTime());
+		when(events.findByServiceIdAndExternalEventId("service", "external")).thenReturn(Optional.of(event(utc)));
+		var replay = new EventRegistrationTransaction(events, users).findExisting(seoul).orElseThrow();
+		assertFalse(replay.created());
+		assertEquals("2026-09-13T16:53:52Z", replay.event().occurredAt());
+		verify(events, never()).saveAndFlush(any());
 	}
 
 	@Test
@@ -115,7 +132,7 @@ class EventServiceTests {
 				new BehaviorEvent(user, "service", "external", "BOOKING", "booking", null, request.occurrenceTime(), Map.of("changed", true)));
 		changed.forEach(saved -> {
 			when(events.findByServiceIdAndExternalEventId("service", "external")).thenReturn(Optional.of(saved));
-			assertEquals(ResponseCode.EVENT_ALREADY_EXISTS, assertThrows(ApiException.class,
+			assertEquals(ResponseCode.DATA_CONFLICT, assertThrows(ApiException.class,
 					() -> new EventRegistrationTransaction(events, users).findExisting(request)).getResponseCode());
 		});
 		verify(events, never()).saveAndFlush(any());

@@ -90,7 +90,7 @@ class EventApiMySqlTests {
 	private EventRequest request(EventType type, String external) {
 		return new EventRequest(SERVICE_A, external, userId, type,
 				type == EventType.CHECK_IN ? null : "booking", type == EventType.CHECK_IN ? "ticket" : null,
-				"2026-10-10T19:30:00", Map.of("device", Map.of("changed", false, "count", 3),
+				"2026-10-10T19:30:00Z", Map.of("device", Map.of("changed", false, "count", 3),
 						"steps", List.of("select", "pay"), "duration", 12.5,
 						"bookingDurationSeconds", 0.25, "deviceChanged", false,
 						"custom_key", Map.of("nested_key", "original")));
@@ -116,6 +116,91 @@ class EventApiMySqlTests {
 		assertEquals(mapper.readTree(mapper.writeValueAsString(request.metadata())),
 				mapper.readTree(jdbc.queryForObject("SELECT metadata FROM behavior_event WHERE event_id=?",
 						String.class, id)));
+		assertEquals(1, eventCount());
+	}
+
+	@Test
+	void registeredExternalUserMapsToInternalUuidForAllEventTypes() throws Exception {
+		String externalUser = "U0001";
+		String registration = mapper.writeValueAsString(Map.of(
+				"serviceId", SERVICE_A, "externalUserId", externalUser));
+		String json = mvc.perform(post("/api/v1/users").header("X-API-Key", KEY_A)
+				.contentType("application/json").content(registration))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.code").value("COMMON_201"))
+				.andExpect(jsonPath("$.data.externalUserId").value(externalUser))
+				.andReturn().getResponse().getContentAsString();
+		String internalId = mapper.readTree(json).get("data").get("userId").asString();
+		assertEquals(internalId, UUID.fromString(internalId).toString());
+		assertNotEquals(externalUser, internalId);
+		mvc.perform(post("/api/v1/users").header("X-API-Key", KEY_A)
+				.contentType("application/json").content(registration))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value("COMMON_200"))
+				.andExpect(jsonPath("$.data.userId").value(internalId));
+		for (EventType type : EventType.values()) {
+			var event = new EventRequest(SERVICE_A, "csv-flow-" + type, internalId, type,
+					type == EventType.CHECK_IN ? null : "booking-1",
+					type == EventType.CHECK_IN ? "ticket-1" : null,
+					"2026-09-13T16:53:52+00:00", Map.of("source", "integration-test"));
+			String result = mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A)
+					.contentType("application/json").content(mapper.writeValueAsString(event)))
+					.andExpect(status().isCreated())
+					.andExpect(jsonPath("$.data.userId").value(internalId))
+					.andExpect(jsonPath("$.data.eventType").value(type.name()))
+					.andExpect(jsonPath("$.data.occurredAt").value("2026-09-13T16:53:52Z"))
+					.andReturn().getResponse().getContentAsString();
+			long eventId = mapper.readTree(result).get("data").get("eventId").asLong();
+			assertEquals(internalId, jdbc.queryForObject(
+					"SELECT user_id FROM behavior_event WHERE event_id=?", String.class, eventId));
+		}
+		assertEquals(3, eventCount());
+		assertEquals(1, jdbc.queryForObject(
+				"SELECT COUNT(*) FROM user_account WHERE service_id=? AND external_user_id=?",
+				Integer.class, SERVICE_A, externalUser));
+	}
+
+	@Test
+	void offsetVariantsReplayTheSameInstantAndStoreUtc() throws Exception {
+		String external = UUID.randomUUID().toString();
+		Long eventId = null;
+		int index = 0;
+		for (String time : new String[] {"2026-09-13T16:53:52+00:00", "2026-09-14T01:53:52+09:00",
+				"2026-09-13T16:53:52Z", "2026-09-13T16:53:52.000Z"}) {
+			boolean created = index++ == 0;
+			var request = new EventRequest(SERVICE_A, external, userId, EventType.BOOKING, "booking", null,
+					time, Map.of("bookingDurationSeconds", 0.25, "deviceChanged", false,
+							"custom", Map.of("nested", List.of(1, 2))));
+			String json = mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A)
+					.contentType("application/json").content(mapper.writeValueAsString(request)))
+					.andExpect(status().is(created ? 201 : 200))
+					.andExpect(jsonPath("$.code").value(created ? "COMMON_201" : "COMMON_200"))
+					.andExpect(jsonPath("$.data.occurredAt").value("2026-09-13T16:53:52Z"))
+					.andExpect(jsonPath("$.data.metadata.custom.nested[1]").value(2))
+					.andReturn().getResponse().getContentAsString();
+			long id = mapper.readTree(json).get("data").get("eventId").asLong();
+			if (eventId == null) {
+				eventId = id;
+			}
+			assertEquals(eventId.longValue(), id);
+			assertEquals(java.time.LocalDateTime.of(2026, 9, 13, 16, 53, 52),
+					jdbc.queryForObject("SELECT occurred_at FROM behavior_event WHERE event_id=?",
+							java.sql.Timestamp.class, id).toLocalDateTime());
+		}
+		var invalid = new EventRequest(SERVICE_A, external, userId, EventType.BOOKING, "booking", null,
+				"2026-09-13T16:53:52", null);
+		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
+				.content(mapper.writeValueAsString(invalid)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+		var changed = new EventRequest(SERVICE_A, external, userId, EventType.BOOKING, "booking", null,
+				"2026-09-13T16:53:53Z", Map.of("bookingDurationSeconds", 0.25, "deviceChanged", false,
+						"custom", Map.of("nested", List.of(1, 2))));
+		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
+				.content(mapper.writeValueAsString(changed)))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.code").value("DATA_CONFLICT"))
+				.andExpect(jsonPath("$.message").value("요청이 현재 리소스 상태와 충돌합니다."));
 		assertEquals(1, eventCount());
 	}
 
@@ -167,8 +252,8 @@ class EventApiMySqlTests {
 				"booking", null, request.occurredAt(), Map.of("changed", true));
 		mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
 				.content(mapper.writeValueAsString(changed)))
-				.andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("EVENT_ALREADY_EXISTS"))
-				.andExpect(jsonPath("$.message").value("동일한 이벤트 식별자로 서로 다른 내용이 요청되었습니다."));
+				.andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DATA_CONFLICT"))
+				.andExpect(jsonPath("$.message").value("요청이 현재 리소스 상태와 충돌합니다."));
 		var saved = events.findById(first.event().eventId()).orElseThrow();
 		assertEquals("BOOKING", saved.getEventType());
 		assertEquals(request.metadata(), saved.getMetadata());
@@ -181,7 +266,7 @@ class EventApiMySqlTests {
 				.user().userId();
 		for (String id : new String[] {UUID.randomUUID().toString(), foreign}) {
 			var request = new EventRequest(SERVICE_A, UUID.randomUUID().toString(), id, EventType.BOOKING,
-					"booking", null, "2026-10-10T19:30:00", null);
+					"booking", null, "2026-10-10T19:30:00Z", null);
 			mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A).contentType("application/json")
 					.content(mapper.writeValueAsString(request)))
 					.andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
@@ -228,7 +313,7 @@ class EventApiMySqlTests {
 		synchronizeInitialReads(first.externalEventId(), 2);
 		var results = concurrent(List.of(first, second));
 		assertEquals(1, results.stream().filter(RegistrationResult.class::isInstance).count());
-		assertEquals(1, results.stream().filter(result -> result == ResponseCode.EVENT_ALREADY_EXISTS).count());
+		assertEquals(1, results.stream().filter(result -> result == ResponseCode.DATA_CONFLICT).count());
 		assertEquals(1, eventCount());
 	}
 
