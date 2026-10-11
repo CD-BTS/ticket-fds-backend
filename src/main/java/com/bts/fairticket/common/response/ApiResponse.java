@@ -16,13 +16,16 @@ public record ApiResponse<T>(boolean success, String code, T data, String messag
 	}
 
 	public static <T> ApiResponse<T> failure(ResponseCode responseCode, T data) {
-		return failure(responseCode.getStatus(), data, responseCode.getMessage());
+		if (!responseCode.getStatus().isError()) {
+			throw new IllegalArgumentException("오류 응답에는 4xx 또는 5xx 상태 코드가 필요합니다.");
+		}
+		return new ApiResponse<>(false, responseCode.getCode(), data, responseCode.getMessage());
 	}
 
-	public static <T> ApiResponse<T> failure(HttpStatusCode status, T data, String message) {
+	public static <T> ApiResponse<T> failure(HttpStatusCode status, T data) {
 		if (!status.isError()) {
 			throw new IllegalArgumentException("오류 응답에는 4xx 또는 5xx 상태 코드가 필요합니다.");
 		}
-		return new ApiResponse<>(false, "COMMON_" + status.value(), data, message);
+		return failure(ResponseCode.forHttpStatus(status), data);
 	}
 }

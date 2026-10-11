@@ -166,4 +166,4 @@ $env:BTS_API_KEY_HASHES = @{ 'ticket-service-a' = $keyHash } | ConvertTo-Json -C
 .\gradlew.bat bootRun
 ```
 
-서비스 ID는 요청 본문의 `service_id`와 일치해야 합니다. 다른 서비스의 사용자는 조회할 수 없습니다. 운영 요청에는 HTTPS를 사용하고 프록시에서도 인증 헤더 로깅을 비활성화합니다. 요청·응답·상태 코드는 [API 명세](docs/api-spec.md)에 정리되어 있습니다.
+서비스 ID는 요청 본문의 `serviceId`와 일치해야 합니다. 다른 서비스의 사용자는 조회할 수 없습니다. 운영 요청에는 HTTPS를 사용하고 프록시에서도 인증 헤더 로깅을 비활성화합니다. 요청·응답·상태 코드는 [API 명세](docs/api-spec.md)에 정리되어 있습니다.

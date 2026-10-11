@@ -29,12 +29,24 @@ class ApiResponseTest {
 
 	@Test
 	void serializesErrorWithNullData() {
-		var json = jsonMapper.valueToTree(ApiResponse.failure(ResponseCode.NOT_FOUND, null));
+		var json = jsonMapper.valueToTree(ApiResponse.failure(ResponseCode.RESOURCE_NOT_FOUND, null));
 
 		assertEquals(4, json.size());
 		assertFalse(json.get("success").asBoolean());
-		assertEquals("COMMON_404", json.get("code").asString());
+		assertEquals("RESOURCE_NOT_FOUND", json.get("code").asString());
 		assertTrue(json.get("data").isNull());
+	}
+
+	@Test
+	void distinguishesErrorsWithTheSameHttpStatus() {
+		assertEquals(ResponseCode.RESOURCE_NOT_FOUND.getStatus(), ResponseCode.USER_NOT_FOUND.getStatus());
+		assertEquals("RESOURCE_NOT_FOUND", ApiResponse.failure(ResponseCode.RESOURCE_NOT_FOUND, null).code());
+		assertEquals("USER_NOT_FOUND", ApiResponse.failure(ResponseCode.USER_NOT_FOUND, null).code());
+		assertEquals(ResponseCode.DATA_CONFLICT.getStatus(), ResponseCode.EVENT_ALREADY_EXISTS.getStatus());
+		assertEquals("DATA_CONFLICT", ApiResponse.failure(ResponseCode.DATA_CONFLICT, null).code());
+		assertEquals("EVENT_ALREADY_EXISTS", ApiResponse.failure(ResponseCode.EVENT_ALREADY_EXISTS, null).code());
+		assertEquals(ResponseCode.EVENT_ALREADY_EXISTS.getMessage(),
+				ApiResponse.failure(ResponseCode.EVENT_ALREADY_EXISTS, null).message());
 	}
 
 	@Test

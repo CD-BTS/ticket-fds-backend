@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.bts.fairticket.behavior.entity.BehaviorEvent;
 
 public record EventResponse(
-		@JsonProperty("event_id") Long eventId,
-		@JsonProperty("service_id") String serviceId,
-		@JsonProperty("external_event_id") String externalEventId,
-		@JsonProperty("user_id") String userId,
-		@JsonProperty("event_type") String eventType,
-		@JsonProperty("booking_id") String bookingId,
-		@JsonProperty("ticket_id") String ticketId,
-		@JsonProperty("occurred_at") String occurredAt,
+		@JsonProperty("eventId") Long eventId,
+		@JsonProperty("serviceId") String serviceId,
+		@JsonProperty("externalEventId") String externalEventId,
+		@JsonProperty("userId") String userId,
+		@JsonProperty("eventType") String eventType,
+		@JsonProperty("bookingId") String bookingId,
+		@JsonProperty("ticketId") String ticketId,
+		@JsonProperty("occurredAt") String occurredAt,
 		Map<String, Object> metadata) {
 
 	public static EventResponse from(BehaviorEvent event) {

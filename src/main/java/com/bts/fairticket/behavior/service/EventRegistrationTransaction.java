@@ -33,7 +33,7 @@ public class EventRegistrationTransaction {
 	public RegistrationResult register(EventRequest request) {
 		var user = users.findById(request.userId())
 				.filter(account -> account.getServiceId().equals(request.serviceId()))
-				.orElseThrow(() -> new ApiException(ResponseCode.NOT_FOUND));
+				.orElseThrow(() -> new ApiException(ResponseCode.USER_NOT_FOUND));
 		var existing = findExisting(request);
 		if (existing.isPresent()) {
 			return existing.get();
@@ -56,7 +56,7 @@ public class EventRegistrationTransaction {
 							|| !Objects.equals(event.getTicketId(), request.ticketId())
 							|| !event.getOccurredAt().equals(request.occurrenceTime())
 							|| !sameJson(event.getMetadata(), request.metadata())) {
-						throw new ApiException(ResponseCode.CONFLICT);
+						throw new ApiException(ResponseCode.EVENT_ALREADY_EXISTS);
 					}
 					return new RegistrationResult(EventResponse.from(event), false);
 				});

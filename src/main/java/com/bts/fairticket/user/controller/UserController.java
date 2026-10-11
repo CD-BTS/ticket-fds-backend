@@ -17,6 +17,7 @@ import com.bts.fairticket.common.response.ApiResponse;
 import com.bts.fairticket.common.response.ResponseCode;
 import com.bts.fairticket.user.dto.UserRegistrationRequest;
 import com.bts.fairticket.user.dto.UserResponse;
+import com.bts.fairticket.user.dto.UserDetailResponse;
 import com.bts.fairticket.user.service.UserService;
 
 @RestController
@@ -39,7 +40,7 @@ public class UserController {
 	}
 
 	@GetMapping("/{userId}")
-	public ApiResponse<UserResponse> getUser(
+	public ApiResponse<UserDetailResponse> getUser(
 			@PathVariable @NotBlank @Size(max = 50) String userId,
 			@RequestAttribute(ApiKeyFilter.SERVICE_ATTRIBUTE) String authenticatedService) {
 		return ApiResponse.success(userService.getUser(userId, authenticatedService));

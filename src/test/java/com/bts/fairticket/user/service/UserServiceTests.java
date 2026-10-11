@@ -1,6 +1,11 @@
 package com.bts.fairticket.user.service;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
+import com.bts.fairticket.risk.entity.RiskAssessment;
+import com.bts.fairticket.risk.repository.RiskAssessmentRepository;
+import com.bts.fairticket.policy.entity.PolicyDecision;
+import com.bts.fairticket.policy.repository.PolicyDecisionRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +23,7 @@ import com.bts.fairticket.user.service.UserRegistrationTransaction.RegistrationR
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -27,12 +33,14 @@ class UserServiceTests {
 	private final UserRegistrationTransaction transaction = mock(UserRegistrationTransaction.class);
 	private final UserAccountRepository users = mock(UserAccountRepository.class);
 	private final UserCreditRepository credits = mock(UserCreditRepository.class);
+	private final RiskAssessmentRepository assessments = mock(RiskAssessmentRepository.class);
+	private final PolicyDecisionRepository policies = mock(PolicyDecisionRepository.class);
 	private UserService service;
 	private final UserRegistrationRequest request = new UserRegistrationRequest("service-a", "external-1");
 
 	@BeforeEach
 	void setUp() {
-		service = new UserService(transaction, users, credits);
+		service = new UserService(transaction, users, credits, assessments, policies);
 	}
 
 	@Test
@@ -56,7 +64,7 @@ class UserServiceTests {
 		when(transaction.register(request)).thenThrow(new DataIntegrityViolationException("internal database detail"));
 		when(transaction.findExisting(request)).thenReturn(Optional.empty());
 		ApiException exception = assertThrows(ApiException.class, () -> service.register(request, "service-a"));
-		assertEquals(ResponseCode.CONFLICT, exception.getResponseCode());
+		assertEquals(ResponseCode.DATA_CONFLICT, exception.getResponseCode());
 	}
 
 	@Test
@@ -65,8 +73,54 @@ class UserServiceTests {
 		when(users.findById("missing")).thenReturn(Optional.empty());
 		for (String id : new String[] {"other", "missing"}) {
 			ApiException exception = assertThrows(ApiException.class, () -> service.getUser(id, "service-a"));
-			assertEquals(ResponseCode.NOT_FOUND, exception.getResponseCode());
+			assertEquals(ResponseCode.USER_NOT_FOUND, exception.getResponseCode());
 		}
-		verifyNoInteractions(credits);
+		verifyNoInteractions(credits, assessments, policies);
+	}
+
+	private void stubOwnUser() {
+		var user = new UserAccount("id", "service-a", "external");
+		when(users.findById("id")).thenReturn(Optional.of(user));
+		when(credits.findById("id")).thenReturn(Optional.of(new UserCredit(user)));
+	}
+
+	@Test
+	void noHistoryReturnsNullSummaryWithoutChangingBasicFields() {
+		stubOwnUser();
+		var result = service.getUser("id", "service-a");
+		assertEquals("id", result.userId());
+		assertEquals(70, result.creditScore());
+		assertEquals("BASE", result.tier());
+		assertNull(result.anomalyScore());
+		assertNull(result.lastAssessedAt());
+		assertNull(result.latestAction());
+	}
+
+	@Test
+	void assessmentOnlyReturnsStoredScoreAndTime() {
+		stubOwnUser();
+		var assessment = mock(RiskAssessment.class);
+		var time = LocalDateTime.of(2026, 10, 10, 12, 0);
+		when(assessment.getAnomalyScore()).thenReturn(0.82);
+		when(assessment.getAssessedAt()).thenReturn(time);
+		when(assessments.findFirstByUser_UserIdOrderByAssessedAtDescAssessmentIdDesc("id"))
+				.thenReturn(Optional.of(assessment));
+		var result = service.getUser("id", "service-a");
+		assertEquals(0.82, result.anomalyScore());
+		assertEquals(time, result.lastAssessedAt());
+		assertNull(result.latestAction());
+	}
+
+	@Test
+	void policyOnlyReturnsStoredActionWithoutInventingAnAssessment() {
+		stubOwnUser();
+		var policy = mock(PolicyDecision.class);
+		when(policy.getAction()).thenReturn("DELAY");
+		when(policies.findFirstByUser_UserIdOrderByDecidedAtDescDecisionIdDesc("id"))
+				.thenReturn(Optional.of(policy));
+		var result = service.getUser("id", "service-a");
+		assertEquals("DELAY", result.latestAction());
+		assertNull(result.anomalyScore());
+		assertNull(result.lastAssessedAt());
 	}
 }
