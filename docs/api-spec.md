@@ -169,7 +169,7 @@ X-API-Key: <서비스에 발급한 키>
   "userId": "c4825ba5-5692-44eb-9882-a8abf733008e",
   "eventType": "BOOKING",
   "bookingId": "booking-123",
-  "occurredAt": "2026-10-10T19:30:00",
+  "occurredAt": "2026-09-13T16:53:52+00:00",
   "metadata": {
     "bookingDurationSeconds": 12.5,
     "deviceChanged": false
@@ -185,12 +185,14 @@ X-API-Key: <서비스에 발급한 키>
 | eventType | 필수, BOOKING / CANCEL / CHECK_IN만 허용 |
 | bookingId | 최대 100자, BOOKING·CANCEL에서는 필수이며 공백 불가 |
 | ticketId | 최대 100자, CHECK_IN에서는 필수이며 공백 불가 |
-| occurredAt | 필수, 정확히 yyyy-MM-dd'T'HH:mm:ss, 유효한 날짜·시각, MySQL DATETIME 범위(1000~9999년) |
-| metadata | 선택, JSON 객체 또는 null, 중첩 객체·배열 지원 |
+| occurredAt | 필수, ISO 8601 문자열, UTC 오프셋 필수(Z, +00:00, +09:00 등), UTC 정규화 후 MySQL DATETIME 범위(1000~9999년), 0이 아닌 소수 초는 거부 |
+| metadata | 선택, JSON Object 또는 null, 추가 속성 허용, 중첩 객체·배열 지원 |
 | metadata.bookingDurationSeconds | 제공 시 0 이상의 숫자. 문자열·boolean·null은 거부 |
 | metadata.deviceChanged | 제공 시 boolean. 문자열·숫자·null은 거부 |
 
-모든 외부 서비스는 **Asia/Seoul 기준 시각**을 전달합니다. 시간대 변환 없이 해당 값을 MySQL `DATETIME`에 저장합니다. 소수 초, `Z`, `+09:00` 등의 시간대 표기, 초가 생략된 문자열은 400입니다. `occurredAt`은 실제 외부 행동 발생 시각이며 서버 수신 시각으로 덮어쓰지 않습니다. 현재 스키마에는 별도 수신 시각 컬럼이 없습니다.
+요청의 `occurredAt`은 UTC 오프셋을 포함해야 합니다. `2026-09-13T16:53:52+00:00`과 `2026-09-14T01:53:52+09:00`은 동일한 순간이며 둘 다 UTC `2026-09-13T16:53:52`로 저장하고, 응답은 `2026-09-13T16:53:52Z`로 반환합니다. 오프셋 없는 문자열과 유효하지 않은 날짜·오프셋은 400 / `INVALID_REQUEST`입니다. 기존 `DATETIME`의 초 단위 정밀도를 유지하므로 0이 아닌 소수 초는 400이며, `.000`처럼 소수 부분이 0인 표현은 허용합니다. UTC 정규화 후 1000~9999년 범위를 벗어나도 400입니다. `occurredAt`은 실제 행동 발생 시각이며 서버 수신 시각으로 덮어쓰지 않습니다. 스키마·JPA의 `LocalDateTime` 매핑은 유지하고 저장 경계에서 `OffsetDateTime`을 UTC로 변환합니다. 사용자 생성·Assessment·Policy 등 다른 시간 컬럼의 정책은 변경하지 않습니다.
+
+기존 행에는 KST 기준 값이 저장되어 있을 수 있습니다. 이번 변경은 기존 데이터를 수정하지 않습니다. UTC 계약 배포 전에 기존 행의 시간 기준과 전환 시점을 확인하고 별도 마이그레이션을 결정해야 합니다. 기존 KST 행을 UTC로 그대로 읽으면 응답 시각이 9시간 달라지고 동일 이벤트 재전송이 충돌할 수 있으며, 신·구 데이터 혼재는 시간 정렬과 Feature 집계에도 영향을 줍니다. 원본 시간 기준이 확인된 행만 별도 승인된 작업으로 변환해야 합니다.
 
 신규 저장은 **201 / COMMON_201**입니다. eventId는 Java Long / MySQL BIGINT AUTO_INCREMENT에 대응하는 64비트 JSON 정수입니다. userId는 UUID 문자열이며 eventId로 바꾸거나 숫자로 변환하지 않습니다.
 
@@ -206,7 +208,7 @@ X-API-Key: <서비스에 발급한 키>
     "eventType": "BOOKING",
     "bookingId": "booking-123",
     "ticketId": null,
-    "occurredAt": "2026-10-10T19:30:00",
+    "occurredAt": "2026-09-13T16:53:52Z",
     "metadata": {
       "bookingDurationSeconds": 12.5,
       "deviceChanged": false
@@ -216,17 +218,17 @@ X-API-Key: <서비스에 발급한 키>
 }
 ```
 
-멱등성 키는 `(serviceId, externalEventId)`입니다. 동일 키에서 사용자·유형·예약 ID·티켓 ID·발생 시각·metadata가 같으면 **200 / COMMON_200**으로 기존 이벤트를 반환합니다. 하나라도 다르면 **409 / EVENT_ALREADY_EXISTS**이며 기존 데이터를 변경하지 않습니다. JSON 객체의 키 순서는 중첩 깊이와 관계없이 무시하며 배열 순서는 유지합니다. 숫자는 값으로 비교하므로 `1`과 `1.0`은 같습니다. metadata의 null과 빈 객체는 다릅니다. 문자열은 임의로 trim하거나 변경하지 않으며 멱등성 키의 조회는 기존 MySQL UNIQUE 제약의 문자열 비교 규칙을 따릅니다.
+멱등성 키는 `(serviceId, externalEventId)`입니다. 동일 키에서 사용자·유형·예약 ID·티켓 ID·발생 시각(UTC로 정규화한 동일 순간)·metadata가 같으면 **200 / COMMON_200**으로 기존 이벤트를 반환합니다. 하나라도 다르면 **409 / DATA_CONFLICT**이며 기존 데이터를 변경하지 않습니다. JSON 객체의 키 순서는 중첩 깊이와 관계없이 무시하며 배열 순서는 유지합니다. 숫자는 값으로 비교하므로 `1`과 `1.0`은 같습니다. metadata의 null과 빈 객체는 다릅니다. 문자열은 임의로 trim하거나 변경하지 않으며 멱등성 키의 조회는 기존 MySQL UNIQUE 제약의 문자열 비교 규칙을 따릅니다.
 
 동시 요청은 기존 UNIQUE 제약으로 보호합니다. 충돌한 저장 트랜잭션의 롤백 후 새 트랜잭션에서 저장된 이벤트와 요청 내용을 비교하여 같은 정책을 적용합니다. 복구할 이벤트가 없는 DB 제약조건 충돌은 409입니다. 이번 API는 이벤트만 저장하며 Credit·위험·정책 데이터는 변경하지 않습니다.
 
 | 오류 | HTTP / code |
 | --- | --- |
 | 필수값·유형·길이·날짜 형식·JSON 오류 | 400 / INVALID_REQUEST |
-| 키 누락·잘못된 키·복수 키 헤더 | 401 / UNAUTHORIZED |
+| API Key 누락·유효하지 않은 API Key·복수 키 헤더 | 401 / UNAUTHORIZED |
 | 인증 서비스와 serviceId 불일치 | 403 / FORBIDDEN |
 | 사용자 없음·타 서비스 사용자 | 404 / USER_NOT_FOUND |
-| 동일 이벤트 식별자의 내용 충돌 | 409 / EVENT_ALREADY_EXISTS |
+| 동일 이벤트 식별자의 내용 충돌 | 409 / DATA_CONFLICT |
 | 복구 불가능한 DB 제약조건 충돌 | 409 / DATA_CONFLICT |
 | 예상하지 못한 내부 오류 | 500 / INTERNAL_SERVER_ERROR |
 
@@ -234,7 +236,7 @@ X-API-Key: <서비스에 발급한 키>
 
 ## 공통 오류 코드 및 메시지
 
-HTTP 상태와 애플리케이션 코드를 별도 필드로 관리합니다. 성공 코드는 `COMMON_200`, `COMMON_201`을 유지합니다. 사용자 미존재·타 서비스 사용자 접근은 `USER_NOT_FOUND`이며, 미등록 URL 등 Spring MVC의 일반 404는 `RESOURCE_NOT_FOUND`입니다. 중복으로 복구할 수 없는 DB 제약조건 충돌은 `DATA_CONFLICT`, 동일 이벤트 식별자에 대한 내용 충돌은 `EVENT_ALREADY_EXISTS`입니다. 아래 기본 매핑에 없는 MVC 오류도 원래 HTTP 상태를 유지하며, 5xx는 `INTERNAL_SERVER_ERROR`, 나머지는 `REQUEST_FAILED`를 반환합니다. 입력값 검증 실패의 필드별 상세 정보는 기존처럼 `data.errors`에 반환합니다.
+HTTP 상태와 애플리케이션 코드를 별도 필드로 관리합니다. 성공 코드는 `COMMON_200`, `COMMON_201`을 유지합니다. 사용자 미존재·타 서비스 사용자 접근은 `USER_NOT_FOUND`이며, 미등록 URL 등 Spring MVC의 일반 404는 `RESOURCE_NOT_FOUND`입니다. 중복으로 복구할 수 없는 DB 제약조건 충돌은 `DATA_CONFLICT`, 동일 이벤트 식별자에 대한 내용 충돌도 `DATA_CONFLICT`입니다. 아래 기본 매핑에 없는 MVC 오류도 원래 HTTP 상태를 유지하며, 5xx는 `INTERNAL_SERVER_ERROR`, 나머지는 `REQUEST_FAILED`를 반환합니다. 입력값 검증 실패의 필드별 상세 정보는 기존처럼 `data.errors`에 반환합니다.
 
 | HTTP | code | message |
 |---|---|---|
@@ -249,9 +251,8 @@ HTTP 상태와 애플리케이션 코드를 별도 필드로 관리합니다. �
 | 500 | INTERNAL_SERVER_ERROR | 서버 내부 오류가 발생했습니다. |
 | 503 | SERVICE_UNAVAILABLE | 현재 서비스를 이용할 수 없습니다. |
 | 404 | USER_NOT_FOUND | 해당 사용자를 찾을 수 없습니다. |
-| 409 | EVENT_ALREADY_EXISTS | 동일한 이벤트 식별자로 서로 다른 내용이 요청되었습니다. |
 | 기본 매핑 외 4xx | REQUEST_FAILED | 요청을 처리할 수 없습니다. |
 
-`INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `USER_NOT_FOUND`, `INTERNAL_SERVER_ERROR`의 코드와 메시지는 기존 Notion 명세서의 문구를 그대로 사용합니다. `EVENT_ALREADY_EXISTS`의 메시지는 최종 이벤트 API 명세서의 내용 충돌 문구를 유지합니다. 사용자 재등록과 동일 이벤트 재전송은 오류가 아니라 200 성공 응답입니다.
+`INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `USER_NOT_FOUND`, `INTERNAL_SERVER_ERROR`의 코드와 메시지는 기존 Notion 명세서의 문구를 그대로 사용합니다. 이벤트 내용 충돌은 이번 UTC 계약 변경에 따라 `DATA_CONFLICT`로 응답합니다. 사용자 재등록과 동일 이벤트 재전송은 오류가 아니라 200 성공 응답입니다.
 
 User/Event MVC 및 MySQL 테스트에서 HTTP 상태·코드·메시지를 함께 검증하며, MVC 테스트는 예상하지 못한 예외가 내부 정보를 노출하지 않고 500 응답으로 변환되는지도 검증합니다.

@@ -2,9 +2,10 @@ package com.bts.fairticket.behavior.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.format.ResolverStyle;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record EventRequest(
@@ -22,12 +22,11 @@ public record EventRequest(
 		@JsonProperty("eventType") @NotNull EventType eventType,
 		@JsonProperty("bookingId") @Size(max = 100) String bookingId,
 		@JsonProperty("ticketId") @Size(max = 100) String ticketId,
-		@JsonProperty("occurredAt") @NotBlank
-		@Pattern(regexp = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}") String occurredAt,
+		@JsonProperty("occurredAt") @NotBlank String occurredAt,
 		Map<String, Object> metadata) {
 
 	private static final DateTimeFormatter TIME_FORMAT =
-			DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withResolverStyle(ResolverStyle.STRICT);
+			DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 	@JsonIgnore
 	@AssertTrue(message = "BOOKING/CANCEL은 bookingId, CHECK_IN은 ticketId가 필요합니다.")
@@ -40,20 +39,23 @@ public record EventRequest(
 	}
 
 	@JsonIgnore
-	@AssertTrue(message = "occurredAt은 유효한 서울 기준 yyyy-MM-dd'T'HH:mm:ss 시각이어야 합니다.")
+	@AssertTrue(message = "occurredAt은 UTC 오프셋을 포함하고 UTC 기준 1000~9999년 범위의 초 단위 ISO 8601 시각이어야 합니다.")
 	public boolean isOccurrenceTimeValid() {
 		if (occurredAt == null) {
 			return true;
 		}
 		try {
-			return occurrenceTime().getYear() >= 1000;
+			LocalDateTime utc = occurrenceTime();
+			return utc.getYear() >= 1000 && utc.getYear() <= 9999 && utc.getNano() == 0;
 		} catch (DateTimeParseException exception) {
 			return false;
 		}
 	}
 
 	public LocalDateTime occurrenceTime() {
-		return LocalDateTime.parse(occurredAt, TIME_FORMAT);
+		// DATETIME에는 시간대가 없으므로 이벤트 API의 저장 경계에서 UTC로 변환한다.
+		return OffsetDateTime.parse(occurredAt, TIME_FORMAT)
+				.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
 	}
 
 	@JsonIgnore
