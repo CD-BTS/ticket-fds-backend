@@ -17,20 +17,19 @@
 | eventType | 필수, BOOKING / CANCEL / CHECK_IN |
 | bookingId | 최대 100자, BOOKING / CANCEL 시 필수 |
 | ticketId | 최대 100자, CHECK_IN 시 필수 |
-| occurredAt | 필수, 유효한 서울 시각 `yyyy-MM-ddTHH:mm:ss`, 연도 1000 이상 |
+| occurredAt | 필수, UTC 오프셋 포함 초 단위 ISO 8601, UTC 기준 연도 1000~9999. 예: `2026-10-26T01:00:00Z`. UTC로 저장 |
 | metadata | 선택 JSON 객체, bookingDurationSeconds가 있으면 0 이상 숫자, deviceChanged가 있으면 boolean |
 
 인증 헤더는 `X-API-Key` 하나이며 JSON 전송에는 `Content-Type: application/json`을 사용한다.
 서버는 원문 키의 SHA-256을 `BTS_API_KEY_HASHES`의 서비스별 해시와 비교한다.
 신규 생성은 HTTP 201, `success: true`, `code: COMMON_201`, `data.eventId` 등을 반환한다.
 `(service_id, external_event_id)`에 UNIQUE 인덱스가 있으며 기존 이벤트 조회와 UNIQUE 충돌 후 재조회로
-동시 중복 삽입을 처리한다. 동일 내용은 200/COMMON_200, 다른 내용은 409/EVENT_ALREADY_EXISTS다.
+동시 중복 삽입을 처리한다. 동일 내용은 200/COMMON_200, 다른 내용은 409/DATA_CONFLICT다.
 
-현재 작업 트리에는 Python 발송 스크립트가 없다. 로컬 `test/#12/dummy-data-integration` 브랜치의
-`scripts/import_dummy_events.py`와 `scripts/README.md`를 `git show`로 읽기만 했다.
+현재 작업 트리에는 `scripts/import_dummy_events.py`와 `scripts/README.md`가 있다.
 CSV 컬럼은 `event_id, external_event_id, user_id, event_type, booking_id, ticket_id, performance_id, occurred_at, metadata`다.
 사용자를 먼저 등록해 CSV user_id를 내부 userId로 매핑하고, performance_id는 metadata에 보존하며 event_id는 보내지 않는다.
-해당 브랜치의 스크립트는 오프셋이 포함된 날짜를 그대로 보내므로 현재 브랜치 DTO와 날짜 정책이 다르다.
+Python 스크립트는 오프셋 포함 날짜를 보내며 현재 DTO도 오프셋을 요구한다.
 이번 k6는 CSV를 재전송하지 않고 현재 DTO에 맞는 BOOKING 요청을 생성한다. Python 코드·원본 CSV는 수정하지 않는다.
 
 ## Windows PowerShell 준비
@@ -128,7 +127,8 @@ Write-Output "k6 exit code=$k6ExitCode"
 구간 사이에는 진행 중 요청을 기다리는 최대 10초와 추가 5초 간격이 있어 부하가 겹치지 않는다.
 요청 timeout은 10초이며 자동 재시도·리다이렉트를 사용하지 않는다. 전체 기본 실행 시간은 약 3분 30~40초다.
 DURATION_SECONDS로 모든 구간의 지속 시간을 동일하게 조절할 수 있다(1~3600초).
-API_BASE_URL은 경로가 없는 HTTP(S) origin, API_KEY는 원문 키다. 별도 테스트 환경을 지정할 수 있으나 운영 환경은 금지한다.
+API_BASE_URL은 localhost, 127.0.0.1 또는 [::1]의 경로 없는 HTTP(S) origin만 허용한다. API_KEY는 원문 키다.
+로컬 API가 원격 DB를 가리키지 않는지 서버 DB_URL도 반드시 확인한다.
 
 externalEventId는 `k6-<RUN_ID>-vus_<VU수>-<전체 VU ID>-<시나리오 iteration ID>`이며 최대 100자 이내다.
 매 실행마다 RUN_ID를 새 UUID로 설정한다. 병렬 실행에서도 서로 다른 UUID를 사용한다.
@@ -137,9 +137,10 @@ externalEventId는 `k6-<RUN_ID>-vus_<VU수>-<전체 VU ID>-<시나리오 iterati
 
 ## 결과와 DB 대조
 
-콘솔과 `load-tests/results.md`에 구간별 요청 수, 생성 확인 수, 성공률, 응답 시간 평균/p95,
-오류율, HTTP 실패율을 출력한다. 원본 집계는 `load-tests/results.json`에 저장된다.
-두 파일은 Git에서 제외하며 매 실행 덮어쓰므로 다음 실행 전에 필요한 결과를 별도로 보관한다.
+콘솔과 `load-tests/results-<유형>-<RUN_ID>.md`에 구간별 요청 수, 생성 확인 수, 요청 RPS, 생성/s,
+성공률, 평균/p95, 오류율, HTTP 실패율을 출력한다. 원본 집계는 같은 이름의 `.json`에 저장한다.
+유형은 `load`, `stress-200/500/1000`, `spike`다. 결과 파일은 Git에서 제외한다.
+매 프로세스마다 새 RUN_ID를 사용해야 기존 결과와 DB 이벤트가 겹치지 않는다.
 응답 시간은 `http_req_duration`(송신·대기·수신, 연결 수립 시간 제외)이다.
 성공률은 HTTP 201 + 응답 봉투 + 생성 ID + 서비스/이벤트/사용자/유형 일치를 검사한 비율이고 오류율은 그 보수다.
 HTTP 실패율은 201 이외의 상태 및 네트워크 실패를 집계하므로 JSON 검증 실패까지 포함한 오류율과 다를 수 있다.
@@ -176,14 +177,16 @@ threshold 판정 / DB 대조 판정:
 Remove-Item Env:API_KEY
 ```
 
-작성 환경에는 k6가 설치되어 있지 않아 실제 부하 테스트 및 DB 전후 대조는 수행하지 않았다.
+기존 #18 테스트 코드 최초 작성 시에는 k6가 설치되어 있지 않아 실제 부하 테스트 및 DB 전후 대조를 수행하지 않았다.
 Node.js로 JavaScript 구문을 검사하고, k6 모듈을 대체한 모의 실행에서 구간 설정,
 301개 요청 ID의 고유성, 요청 형식, 비 JSON 오류 집계, 결과 문서 PASS/FAIL 출력을 확인했다.
 이는 실제 k6 런타임 및 MySQL 적재 검증을 대체하지 않는다.
 측정값은 로컬 실행 후 기록해야 하며 성능 수치를 미리 가정하지 않는다.
 시나리오·집계 설정 참고: [k6 옵션 공식 문서](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/).
 
-## 실제 부하 테스트 결과 (#18)
+## 과거 실제 부하 테스트 결과 (#18)
+
+아래 61,099건은 당시 구현과 날짜 정책에서 측정한 과거 기록이며 현재 브랜치 및 확장 테스트의 실행 결과가 아니다.
 
 ### 테스트 정보
 
@@ -233,3 +236,53 @@ k6 생성 확인 수 61,099건과 MySQL 실제 적재 건수 61,099건이 정확
 **최종 판정: k6 Threshold PASS / DB 정합성 PASS**
 
 ※ 본 테스트는 고유한 이벤트 ID를 사용하는 신규 이벤트 적재 부하 테스트이며, 동일 이벤트 ID의 동시 중복 전송에 대한 별도 멱등성 경쟁 테스트는 포함하지 않는다.
+
+## 확장 Stress / Spike 테스트 (#21): 최종 상태
+
+실제 측정 결과, 완료 조건 대조, Git/민감정보 검토는
+[이슈 #21 최종 보고서](issue21-final-load-test-report.md)를 기준으로 한다.
+10/50/100 VU는 위 #18의 과거 60초 결과이며, #21과 동일 조건의 재실행이 아니다.
+
+### 재사용 코드와 실행 조건
+
+- `event-common.js`: 기존 API 인증, UTC 시각, 사용자 배정, 고유 이벤트 ID, 응답 identity 검증 및 집계.
+- `event-load-test.js`: 기존 10/50/100 VU 시나리오. `DURATION_SECONDS` 기본 60초.
+- `event-stress-test.js`: 한 프로세스에서 한 단계. `STRESS_VUS` 허용값 200/300/400/500/1000, 기본 200.
+- `run-event-stress.ps1`: 200/500/1000 일반 ladder. 실패 시 상위 단계 중지, 진행 시 NEXT 확인. 300/400은 개별 실행 대상이다.
+- `event-spike-test.js`: 하나의 `ramping-vus` 시나리오, 시작 50 VU, 최대 500 VU.
+
+| Spike 구간 | 1차: peak 10초 | 2차: peak 20초 |
+|---|---|---|
+| baseline: 50 VU | 0~10초 | 0~10초 |
+| surge: 50→500 VU | 10~11초 | 10~11초 |
+| peak: 500 VU | 11~21초 | 11~31초 |
+| decline: 500→50 VU | 21~22초 | 31~32초 |
+| recovery: 50 VU | 22~42초 | 32~52초 |
+
+Spike는 `SPIKE_PEAK_SECONDS=10`(기본) 또는 `20`을 사용한다.
+`SPIKE_REPORT_TYPE=spike`(기본) 또는 `spike2`로 결과 이름을 구분한다.
+Spike 일정은 위 고정 프로파일이며 `DURATION_SECONDS`로 바뀌지 않는다.
+감소 구간을 1초로 유지하기 위해 `gracefulRampDown=0s`, 최종 종료는 `gracefulStop=10s`다.
+취소된 요청은 서버에서 저장될 수 있으므로 HTTP/네트워크 실패 및 클라이언트 확인 성공과 따로 DB 대조한다.
+
+### 결과 해석과 보호 조건
+
+구간 태그는 요청 **시작 시점**을 기준으로 한다. 시작 RPS는 시도 수/설정 구간 초,
+확인 성공/s는 응답 검증 성공 수/설정 구간 초다. 완료 응답의 지연/오류는 시작 구간에 귀속한다.
+k6 전체 실행 시간 기반 RPS와 다르며, 중단 실행에서 count/예정 시간은 처리량으로 쓰지 않는다.
+성공률 99% 이상·오류율 1% 이하가 응답 threshold다. `p(95)>=0`은 구간 집계를 노출하기 위한 조건이며 지연 SLA가 아니다.
+
+호스트 안전 감시는 로컬 PowerShell 실행기에서 수행했다. `k6 run event-spike-test.js` 자체는
+호스트 RAM 또는 서버 GET을 감시하지 않으므로 동일 보호 기능이 있다고 오해하지 않는다.
+보호 조건은 가용 물리 RAM 64 MiB 미만, Java 종료, 인증 GET 실패/10초 무응답이다.
+정상 상태에서도 CPU가 100%라는 이유만으로 중단하지는 않았다.
+
+대시보드는 `K6_WEB_DASHBOARD=true`, `K6_WEB_DASHBOARD_OPEN=false`,
+`K6_WEB_DASHBOARD_PORT=-1`로 HTML 내보내기만 사용해 브라우저 연결에 따른 종료 지연을 피했다.
+Spike 집계 주기는 1초다. 로컬 인증 파일, 사용자 ID 목록, 원본 로그와 결과는 최종 보고서의 Git 분류를 따른다.
+
+### 완료 결과의 범위
+
+200/300/400/500 VU Stress와 Spike 1·2차는 완료됐다. 1,000 VU는 13.42초에 메모리 보호로 중단됐다.
+MySQL 직접 CPU·메모리 및 200/300/400 DB 전후 증빙은 미확인이다. 자세한 평가와 종료 권고는 최종 보고서에 기록했다.
+이 문서 정리 작업에서는 추가 테스트를 실행하지 않았다.

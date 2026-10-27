@@ -1,0 +1,183 @@
+﻿{
+    "runId":  "48d87476-3e28-4d24-b35d-ac35f071b4ab",
+    "status":  "ABORTED",
+    "plannedSeconds":  30,
+    "actualMetricSeconds":  13.422856,
+    "abort":  {
+                  "stoppedEarly":  true,
+                  "utc":  "2026-10-27T11:20:04.9860039Z",
+                  "reason":  "Available physical RAM below 64 MiB",
+                  "action":  "Stop k6 only; do not restart or retry"
+              },
+    "result":  {
+                   "vus":  1000,
+                   "runId":  "48d87476-3e28-4d24-b35d-ac35f071b4ab",
+                   "attempts":  4213,
+                   "created":  2496,
+                   "plannedRps":  null,
+                   "actualRps":  239.4423362658439,
+                   "averageMs":  2782.705744617299,
+                   "p95Ms":  4591.98227,
+                   "successPercent":  77.660236465463600,
+                   "errorPercent":  22.33976353453640300,
+                   "networkFailures":  718,
+                   "httpFailures":  0,
+                   "createdRps":  null,
+                   "thresholdPassed":  false,
+                   "stoppedEarly":  true,
+                   "completedRequests":  3214,
+                   "actualSeconds":  13.422856,
+                   "htmlJsonMatch":  true,
+                   "htmlRps":  235.16,
+                   "resources":  {
+                                     "samples":  5,
+                                     "firstSampleSeconds":  1.5024179,
+                                     "lastSampleSeconds":  13.0512488,
+                                     "exitCode":  103,
+                                     "serverCpuPercent":  {
+                                                              "average":  12.135244213921155,
+                                                              "maximum":  14.060610439882309
+                                                          },
+                                     "serverWorkingSetMiB":  {
+                                                                 "average":  205.621875,
+                                                                 "maximum":  220.25390625
+                                                             },
+                                     "serverPrivateMiB":  {
+                                                              "average":  436.3953125,
+                                                              "maximum":  436.80078125
+                                                          },
+                                     "systemCpuPercent":  {
+                                                              "average":  96.8,
+                                                              "maximum":  100
+                                                          },
+                                     "systemUsedMemoryMiB":  {
+                                                                 "average":  7754.175,
+                                                                 "maximum":  7878.02734375
+                                                             },
+                                     "k6CpuPercent":  {
+                                                          "average":  8.6795904833894859,
+                                                          "maximum":  27.1697458476766
+                                                      },
+                                     "k6WorkingSetMiB":  {
+                                                             "average":  401.596875,
+                                                             "maximum":  423.1328125
+                                                         }
+                                 }
+               },
+    "incompleteAttempts":  999,
+    "persistedWithoutClientConfirmation":  999,
+    "networkErrorMessages":  [
+                                 {
+                                     "count":  718,
+                                     "status":  0,
+                                     "observedDetailErrorCode":  1212,
+                                     "message":  "No connection could be made because the target machine actively refused it.",
+                                     "type":  "connection_refused"
+                                 }
+                             ],
+    "db":  {
+               "snapshots":  [
+                                 {
+                                     "phase":  "before_auth",
+                                     "utc":  "2026-10-27T11:19:48.2256905Z",
+                                     "total":  173913,
+                                     "service":  153640,
+                                     "run":  0,
+                                     "distinctRun":  0,
+                                     "duplicateKeys":  0
+                                 },
+                                 {
+                                     "phase":  "before_load",
+                                     "utc":  "2026-10-27T11:19:51.0844569Z",
+                                     "total":  173914,
+                                     "service":  153641,
+                                     "run":  0,
+                                     "distinctRun":  0,
+                                     "duplicateKeys":  0
+                                 },
+                                 {
+                                     "phase":  "after_load",
+                                     "utc":  "2026-10-27T11:20:15.8735625Z",
+                                     "total":  177409,
+                                     "service":  157136,
+                                     "run":  3495,
+                                     "distinctRun":  3495,
+                                     "duplicateKeys":  0
+                                 }
+                             ],
+               "loadAdded":  3495,
+               "addedIncludingAuth":  3496,
+               "runEvents":  3495,
+               "distinctRunEvents":  3495,
+               "duplicateKeyGroups":  0,
+               "attemptsReconciled":  true
+           },
+    "health":  {
+                   "runId":  "48d87476-3e28-4d24-b35d-ac35f071b4ab",
+                   "checks":  [
+                                  {
+                                      "phase":  "before_load",
+                                      "startedUtc":  "2026-10-27T11:19:48.6184400Z",
+                                      "elapsedMs":  1874.2938000000001,
+                                      "httpStatus":  200,
+                                      "ok":  true,
+                                      "error":  null
+                                  },
+                                  {
+                                      "phase":  "during_load",
+                                      "startedUtc":  "2026-10-27T11:19:59.7654283Z",
+                                      "elapsedMs":  8466.9883,
+                                      "httpStatus":  200,
+                                      "ok":  true,
+                                      "error":  null
+                                  },
+                                  {
+                                      "phase":  "after_load",
+                                      "startedUtc":  "2026-10-27T11:20:08.2364077Z",
+                                      "elapsedMs":  6052.4026,
+                                      "httpStatus":  200,
+                                      "ok":  true,
+                                      "error":  null
+                                  }
+                              ]
+               },
+    "postcheck":  {
+                      "listening":  true,
+                      "activeK6Count":  0,
+                      "serverPid":  6324,
+                      "utc":  "2026-10-27T11:20:14.7166524Z",
+                      "stoppedEarly":  true,
+                      "processName":  "java.exe",
+                      "authenticatedGetOk":  true,
+                      "creationUtc":  "2026-10-27T04:08:19.7601600Z"
+                  },
+    "execution":  {
+                      "sameMachine":  true,
+                      "computerName":  "BOOK-B9L8E7JSGD",
+                      "vus":  1000,
+                      "apiBaseUrl":  "http://localhost:8080",
+                      "logicalProcessors":  8,
+                      "k6ProcessName":  "k6",
+                      "dashboardPeriod":  "5s",
+                      "serverPid":  6324,
+                      "k6StartUtc":  "2026-10-27T11:19:51.5506840Z",
+                      "durationSeconds":  30,
+                      "k6Pid":  32572,
+                      "dashboardPort":  -1,
+                      "serverStartUtc":  "2026-10-27T04:08:19.7601600Z",
+                      "serverProcessName":  "java.exe"
+                  },
+    "notes":  [
+                  "One load execution only. Planned 1000 VU x 30s; stopped early after 13.422856 seconds of k6 metric time because available physical RAM fell below 64 MiB. No retry, restart, server tuning or Spike Test.",
+                  "Same 500 VU authentication, 100 user IDs, event workload, 10s request timeout, dashboard=true/open=false/port=-1/period=5s and resource collection method. Added a loopback k6 REST stop API and occasional authenticated read-only GET health probes (10s timeout). These safety probes add a small amount of server work outside k6 request metrics.",
+                  "k6 exit code 103 and log test run stopped from REST API confirm the safety stop. The fallback force-stop was not needed. CPU 100% alone was not a stop condition; the available RAM threshold triggered.",
+                  "Completed response metrics: 3214 responses = 2496 client-confirmed successes + 718 network errors. 999 of 4213 started attempts were interrupted and excluded from success/error rate denominators and completed-request RPS. No HTTP error responses or response validation failures were recorded.",
+                  "All 718 Request Failed warning lines report connection refusal. The script logged detailed EVENT FAILURE lines only on each VU first iteration (706 lines, error code 1212), so those detail lines are not a complete failure counter. Warnings and detail lines must not be added together.",
+                  "DB contains 3495 unique run events, 999 more than client-confirmed successes. This exactly matches interrupted attempts; server processing can persist requests after k6 stops waiting for responses. 3495 DB rows + 718 refused connections account for all 4213 started attempts. This is not evidence of duplicate or missing records.",
+                  "The raw k6 Markdown count/30 figures (140.43 attempted/s, 83.20 client-confirmed created/s) are not measured throughput because the run was aborted. Use completed-request RPS 239.44 over actual elapsed time for this partial observation; do not compare it as a completed 30s capacity test.",
+                  "Same PC: Java PID 6324 and k6 PID 32572, 8 logical CPUs, API localhost:8080. Whole-system CPU and memory pressure include k6, Java, MySQL/Docker, monitoring and other programs. The observed limit includes shared-host resource competition and cannot isolate server-only capacity.",
+                  "Resource averages are unweighted averages of 5 samples through the safety stop, including startup. One-second sleep plus CIM overhead caused irregular intervals. Memory denotes resident/private committed memory, not Java heap. CPU is normalized to all 8 logical processors.",
+                  "Spring Boot retained its original PID/start time and was listening after the stop. Authenticated GET returned HTTP 200 with matching service/user, taking 6052.40 ms; reachability recovered but low-latency recovery is not established by this one check.",
+                  "Existing DB records were not updated or deleted. Load added 3495 rows, authenticated POST preflight added one more. Health GET requests did not create records. HTML and JSON counters/rates/latencies match within dashboard rounding; dashboard RPS uses a separate reporting interval."
+              ]
+}
