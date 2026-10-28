@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-10-27T12:29:24.318Z",
+  "indexFilesScanned": 104,
+  "changedWorkingFilesScanned": 68,
+  "knownSecretCount": 6,
+  "dashboardPayloadsDecoded": true,
+  "stagedPaths": [
+    ".gitignore",
+    "docker-compose.yml",
+    "docs/event-load-test.md",
+    "load-tests/analyze-issue21-1000.ps1",
+    "load-tests/analyze-issue21-500.ps1",
+    "load-tests/compare-issue21.ps1",
+    "load-tests/event-common.js",
+    "load-tests/event-load-test.js",
+    "load-tests/event-smoke-test.js",
+    "load-tests/event-spike-test.js",
+    "load-tests/event-stress-test.js",
+    "load-tests/issue21-stress-1000-analysis.json",
+    "load-tests/issue21-stress-1000-analysis.md",
+    "load-tests/issue21-stress-1000-dashboard.html",
+    "load-tests/issue21-stress-300-analysis.json",
+    "load-tests/issue21-stress-300-analysis.md",
+    "load-tests/issue21-stress-300-dashboard.html",
+    "load-tests/issue21-stress-400-dashboard.html",
+    "load-tests/issue21-stress-500-analysis.json",
+    "load-tests/issue21-stress-500-analysis.md",
+    "load-tests/issue21-stress-500-dashboard.html",
+    "load-tests/issue21-stress-comparison.json",
+    "load-tests/issue21-stress-comparison.md",
+    "load-tests/run-event-stress.ps1",
+    "load-tests/run-issue21-1000.ps1",
+    "load-tests/run-issue21-300.ps1",
+    "load-tests/run-issue21-400.ps1",
+    "load-tests/run-issue21-500.ps1",
+    "load-tests/summarize-issue21-300.ps1",
+    "load-tests/verify-events.sql"
+  ],
+  "indexWorkingTreeDrift": [
+    "docs/event-load-test.md",
+    "load-tests/event-common.js",
+    "load-tests/event-spike-test.js"
+  ],
+  "findings": [],
+  "indexUserIdExposure": [],
+  "localUserIdCount": 100,
+  "ignoredPaths": [
+    ".env",
+    ".env.issue21-key.dpapi",
+    ".env.issue21-server.dpapi"
+  ],
+  "notes": [
+    "Values are never printed or persisted. Exact matching covers supplied live credentials and auth hashes plus common token/private-key/credential-URL patterns.",
+    "Both current index blobs and changed/untracked working files are scanned, including decoded gzip/base64 dashboard data.",
+    "This is a point-in-time content check, not a guarantee about future staging, Git history, external archives or unknown secret formats.",
+    "No index entries, server settings, DB records or credentials were modified."
+  ]
+}

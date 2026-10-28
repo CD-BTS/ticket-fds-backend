@@ -1,0 +1,1006 @@
+{
+  "label": "Issue #21 pre-Redis Spike Baseline",
+  "runId": "7e3352c8-b82d-4034-8048-6f250fa5d430",
+  "status": "COMPLETED",
+  "actualMetricSeconds": 42.1462704,
+  "execution": {
+    "sameMachine": true,
+    "computerName": "BOOK-B9L8E7JSGD",
+    "vus": 500,
+    "apiBaseUrl": "http://localhost:8080",
+    "logicalProcessors": 8,
+    "k6ProcessName": "k6",
+    "dashboardPeriod": "1s",
+    "serverPid": 6324,
+    "k6StartUtc": "2026-10-27T11:56:28.7693754Z",
+    "durationSeconds": 42,
+    "k6Pid": 27048,
+    "dashboardPort": -1,
+    "serverStartUtc": "2026-10-27T04:08:19.7601600Z",
+    "serverProcessName": "java.exe"
+  },
+  "phases": [
+    {
+      "name": "baseline",
+      "start": 0,
+      "end": 10,
+      "seconds": 10,
+      "from": 50,
+      "to": 50,
+      "attempts": 2872,
+      "completed": 2872,
+      "clientConfirmed": 2872,
+      "interrupted": 0,
+      "startedRps": 287.2,
+      "confirmedRps": 287.2,
+      "averageMs": 174.53219495125336,
+      "p95Ms": 317.4950149999998,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkErrors": 0,
+      "httpErrors": 0,
+      "connectionRefused": 0,
+      "firstRequestSecond": 0.007,
+      "lastRequestSecond": 9.997,
+      "activeVuMin": 14,
+      "activeVuMedian": 50,
+      "activeVuMax": 50,
+      "dbEvents": 2872
+    },
+    {
+      "seconds": 1,
+      "from": 50,
+      "to": 500,
+      "name": "surge",
+      "start": 10,
+      "end": 11,
+      "attempts": 694,
+      "completed": 694,
+      "clientConfirmed": 694,
+      "interrupted": 0,
+      "startedRps": 694,
+      "confirmedRps": 694,
+      "averageMs": 903.8730636887606,
+      "p95Ms": 1393.2899049999999,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkErrors": 0,
+      "httpErrors": 0,
+      "connectionRefused": 0,
+      "firstRequestSecond": 10.003,
+      "lastRequestSecond": 10.996,
+      "activeVuMin": 51,
+      "activeVuMedian": 270.5,
+      "activeVuMax": 498,
+      "dbEvents": 694
+    },
+    {
+      "name": "peak",
+      "start": 11,
+      "end": 21,
+      "seconds": 10,
+      "from": 500,
+      "to": 500,
+      "attempts": 3023,
+      "completed": 2686,
+      "clientConfirmed": 2686,
+      "interrupted": 337,
+      "startedRps": 302.3,
+      "confirmedRps": 268.6,
+      "averageMs": 1672.7258045420724,
+      "p95Ms": 1972.61275,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkErrors": 0,
+      "httpErrors": 0,
+      "connectionRefused": 0,
+      "firstRequestSecond": 11,
+      "lastRequestSecond": 20.999,
+      "activeVuMin": 499,
+      "activeVuMedian": 500,
+      "activeVuMax": 500,
+      "dbEvents": 3023
+    },
+    {
+      "to": 50,
+      "name": "decline",
+      "start": 21,
+      "end": 22,
+      "seconds": 1,
+      "from": 500,
+      "attempts": 145,
+      "completed": 32,
+      "clientConfirmed": 32,
+      "interrupted": 113,
+      "startedRps": 145,
+      "confirmedRps": 32,
+      "averageMs": 1556.8645875000002,
+      "p95Ms": 1709.887925,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkErrors": 0,
+      "httpErrors": 0,
+      "connectionRefused": 0,
+      "firstRequestSecond": 21,
+      "lastRequestSecond": 21.971,
+      "activeVuMin": 64,
+      "activeVuMedian": 394,
+      "activeVuMax": 500,
+      "dbEvents": 145
+    },
+    {
+      "name": "recovery",
+      "start": 22,
+      "end": 42,
+      "seconds": 20,
+      "from": 50,
+      "to": 50,
+      "attempts": 4598,
+      "completed": 4598,
+      "clientConfirmed": 4598,
+      "interrupted": 0,
+      "startedRps": 229.9,
+      "confirmedRps": 229.9,
+      "averageMs": 209.3604223140498,
+      "p95Ms": 304.121505,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkErrors": 0,
+      "httpErrors": 0,
+      "connectionRefused": 0,
+      "firstRequestSecond": 22.002,
+      "lastRequestSecond": 41.998,
+      "activeVuMin": 50,
+      "activeVuMedian": 50,
+      "activeVuMax": 50,
+      "dbEvents": 4598
+    }
+  ],
+  "timeline": [
+    {
+      "second": 0,
+      "min": 14,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 1,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 2,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 3,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 4,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 5,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 6,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 7,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 8,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 9,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 10,
+      "min": 51,
+      "median": 270.5,
+      "max": 498
+    },
+    {
+      "second": 11,
+      "min": 499,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 12,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 13,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 14,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 15,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 16,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 17,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 18,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 19,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 20,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 21,
+      "min": 64,
+      "median": 394,
+      "max": 500
+    },
+    {
+      "second": 22,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 23,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 24,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 25,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 26,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 27,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 28,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 29,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 30,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 31,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 32,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 33,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 34,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 35,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 36,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 37,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 38,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 39,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 40,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 41,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    }
+  ],
+  "recovery": [
+    {
+      "window": "early",
+      "start": 22,
+      "end": 32,
+      "completed": 2073,
+      "confirmedRps": 207.3,
+      "averageMs": 224.67395740472702,
+      "p95Ms": 341.16995999999995,
+      "successPercent": 100,
+      "errorPercent": 0
+    },
+    {
+      "window": "late",
+      "start": 32,
+      "end": 42,
+      "completed": 2525,
+      "confirmedRps": 252.5,
+      "averageMs": 196.78816162376225,
+      "p95Ms": 272.97589999999997,
+      "successPercent": 100,
+      "errorPercent": 0
+    }
+  ],
+  "recoveryAssessment": {
+    "lateAverageChangePercent": 12.751782946822487,
+    "lateP95ChangePercent": -14.021988660199868,
+    "lateThroughputChangePercent": -12.082172701949856,
+    "result": "Errors and p95 recovered; mean latency remained above baseline. Do not claim full latency/throughput recovery from this single run."
+  },
+  "resourceSummary": {
+    "sampleCount": 18,
+    "systemCpuPercent": {
+      "average": 94.77777777777777,
+      "min": 89,
+      "max": 100
+    },
+    "serverCpuPercent": {
+      "average": 17.002099521994168,
+      "min": 9.63846750936859,
+      "max": 21.954894740155215
+    },
+    "k6CpuPercent": {
+      "average": 4.52029458457525,
+      "min": 1.5516698762647723,
+      "max": 11.512613969523594
+    },
+    "systemUsedMemoryMiB": {
+      "average": 7458.689670138889,
+      "min": 7294.390625,
+      "max": 7690.84765625
+    },
+    "systemAvailableMemoryMiB": {
+      "average": 434.7790798611111,
+      "min": 202.62109375,
+      "max": 599.078125
+    },
+    "serverWorkingSetMiB": {
+      "average": 141.36046006944446,
+      "min": 92.92578125,
+      "max": 145.78125
+    },
+    "serverPrivateMiB": {
+      "average": 435.92881944444446,
+      "min": 421.20703125,
+      "max": 436.875
+    },
+    "k6WorkingSetMiB": {
+      "average": 286.224609375,
+      "min": 220.01953125,
+      "max": 294.26953125
+    }
+  },
+  "resourcesByApproximatePhase": {
+    "baseline": {
+      "sampleCount": 1,
+      "systemCpuPercent": {
+        "average": 94,
+        "min": 94,
+        "max": 94
+      },
+      "serverCpuPercent": {
+        "average": 9.63846750936859,
+        "min": 9.63846750936859,
+        "max": 9.63846750936859
+      },
+      "k6CpuPercent": {
+        "average": 11.512613969523594,
+        "min": 11.512613969523594,
+        "max": 11.512613969523594
+      },
+      "systemUsedMemoryMiB": {
+        "average": 7690.84765625,
+        "min": 7690.84765625,
+        "max": 7690.84765625
+      },
+      "systemAvailableMemoryMiB": {
+        "average": 202.62109375,
+        "min": 202.62109375,
+        "max": 202.62109375
+      },
+      "serverWorkingSetMiB": {
+        "average": 92.92578125,
+        "min": 92.92578125,
+        "max": 92.92578125
+      },
+      "serverPrivateMiB": {
+        "average": 421.20703125,
+        "min": 421.20703125,
+        "max": 421.20703125
+      },
+      "k6WorkingSetMiB": {
+        "average": 220.01953125,
+        "min": 220.01953125,
+        "max": 220.01953125
+      }
+    },
+    "surge": {
+      "sampleCount": 0,
+      "systemCpuPercent": null,
+      "serverCpuPercent": null,
+      "k6CpuPercent": null,
+      "systemUsedMemoryMiB": null,
+      "systemAvailableMemoryMiB": null,
+      "serverWorkingSetMiB": null,
+      "serverPrivateMiB": null,
+      "k6WorkingSetMiB": null
+    },
+    "peak": {
+      "sampleCount": 5,
+      "systemCpuPercent": {
+        "average": 92.8,
+        "min": 91,
+        "max": 95
+      },
+      "serverCpuPercent": {
+        "average": 18.456068936950714,
+        "min": 16.262063755103252,
+        "max": 21.954894740155215
+      },
+      "k6CpuPercent": {
+        "average": 4.612771245643645,
+        "min": 3.361816538471445,
+        "max": 5.337667994204005
+      },
+      "systemUsedMemoryMiB": {
+        "average": 7349.7890625,
+        "min": 7294.390625,
+        "max": 7399.07421875
+      },
+      "systemAvailableMemoryMiB": {
+        "average": 543.6796875,
+        "min": 494.39453125,
+        "max": 599.078125
+      },
+      "serverWorkingSetMiB": {
+        "average": 142.98359375,
+        "min": 142.79296875,
+        "max": 143.1015625
+      },
+      "serverPrivateMiB": {
+        "average": 436.771875,
+        "min": 436.76953125,
+        "max": 436.7734375
+      },
+      "k6WorkingSetMiB": {
+        "average": 292.66015625,
+        "min": 288.16796875,
+        "max": 294.17578125
+      }
+    },
+    "decline": {
+      "sampleCount": 0,
+      "systemCpuPercent": null,
+      "serverCpuPercent": null,
+      "k6CpuPercent": null,
+      "systemUsedMemoryMiB": null,
+      "systemAvailableMemoryMiB": null,
+      "serverWorkingSetMiB": null,
+      "serverPrivateMiB": null,
+      "k6WorkingSetMiB": null
+    },
+    "recovery": {
+      "sampleCount": 12,
+      "systemCpuPercent": {
+        "average": 95.66666666666667,
+        "min": 89,
+        "max": 100
+      },
+      "serverCpuPercent": {
+        "average": 17.00991493348107,
+        "min": 14.90930018468662,
+        "max": 18.791387278826125
+      },
+      "k6CpuPercent": {
+        "average": 3.899069360384388,
+        "min": 1.5516698762647723,
+        "max": 5.821764769494927
+      },
+      "systemUsedMemoryMiB": {
+        "average": 7484.718424479167,
+        "min": 7414.05078125,
+        "max": 7551.26953125
+      },
+      "systemAvailableMemoryMiB": {
+        "average": 408.7503255208333,
+        "min": 342.19921875,
+        "max": 479.41796875
+      },
+      "serverWorkingSetMiB": {
+        "average": 144.72037760416666,
+        "min": 143.640625,
+        "max": 145.78125
+      },
+      "serverPrivateMiB": {
+        "average": 436.8043619791667,
+        "min": 436.7734375,
+        "max": 436.875
+      },
+      "k6WorkingSetMiB": {
+        "average": 289.0602213541667,
+        "min": 287.13671875,
+        "max": 294.26953125
+      }
+    }
+  },
+  "dbVerification": {
+    "beforeAuth": {
+      "phase": "before_auth",
+      "utc": "2026-10-27T11:56:26.9482422Z",
+      "total": 177409,
+      "service": 157136,
+      "run": 0,
+      "distinctRun": 0,
+      "duplicateKeys": 0
+    },
+    "before": {
+      "phase": "before_load",
+      "utc": "2026-10-27T11:56:28.3446705Z",
+      "total": 177410,
+      "service": 157137,
+      "run": 0,
+      "distinctRun": 0,
+      "duplicateKeys": 0
+    },
+    "after": {
+      "phase": "after_load",
+      "utc": "2026-10-27T11:57:14.6919849Z",
+      "total": 188742,
+      "service": 168469,
+      "run": 11332,
+      "distinctRun": 11332,
+      "duplicateKeys": 0
+    },
+    "loadAdded": 11332,
+    "includingAuthAdded": 11333,
+    "interrupted": 450,
+    "persistedWithoutClientConfirmation": 450,
+    "allAttemptsReconciled": true
+  },
+  "health": {
+    "runId": "7e3352c8-b82d-4034-8048-6f250fa5d430",
+    "checks": [
+      {
+        "phase": "before_load",
+        "startedUtc": "2026-10-27T11:56:27.5369106Z",
+        "elapsedMs": 58.0475,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:56:42.7507714Z",
+        "elapsedMs": 1617.1336000000001,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:56:49.4493241Z",
+        "elapsedMs": 3540.3069,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:56:54.7001975Z",
+        "elapsedMs": 1772.4669000000001,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:56:59.8173671Z",
+        "elapsedMs": 1750.9133000000002,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:57:04.9889289Z",
+        "elapsedMs": 1749.49,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "during_load",
+        "startedUtc": "2026-10-27T11:57:10.0932820Z",
+        "elapsedMs": 1645.1477,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      },
+      {
+        "phase": "after_load",
+        "startedUtc": "2026-10-27T11:57:13.3022222Z",
+        "elapsedMs": 24.0834,
+        "httpStatus": 200,
+        "ok": true,
+        "error": null
+      }
+    ]
+  },
+  "post": {
+    "listening": true,
+    "activeK6Count": 0,
+    "serverPid": 6324,
+    "utc": "2026-10-27T11:57:13.5140220Z",
+    "stoppedEarly": false,
+    "processName": "java.exe",
+    "authenticatedGetOk": true,
+    "creationUtc": "2026-10-27T04:08:19.7601600Z"
+  },
+  "totals": {
+    "attempts": 11332,
+    "completed": 10882,
+    "confirmed": 10882,
+    "interrupted": 450,
+    "actualCompletedRps": 258.19603719905905,
+    "httpErrors": 0,
+    "networkErrors": 0,
+    "connectionRefused": 0
+  },
+  "stressReference": [
+    {
+      "vus": 200,
+      "runId": "b6536e3d-f6a4-4a3f-9f49-da299e3a732f",
+      "attempts": 5678,
+      "created": 5678,
+      "plannedRps": 189.26666666666668,
+      "actualRps": 184.46509496926163,
+      "averageMs": 1067.8893394152908,
+      "p95Ms": 2004.992965,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkFailures": 0,
+      "httpFailures": 0,
+      "createdRps": 189.26666666666668,
+      "thresholdPassed": true,
+      "stoppedEarly": false,
+      "completedRequests": 5678,
+      "actualSeconds": 30.7808911
+    },
+    {
+      "vus": 300,
+      "runId": "d7670ad9-e74a-4323-aa99-fded01c09d19",
+      "attempts": 8378,
+      "created": 8378,
+      "plannedRps": 279.26666666666665,
+      "actualRps": 270.73364309359624,
+      "averageMs": 1085.7132992002867,
+      "p95Ms": 1531.02393,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkFailures": 0,
+      "httpFailures": 0,
+      "createdRps": 279.26666666666665,
+      "thresholdPassed": true,
+      "stoppedEarly": false,
+      "completedRequests": 8378,
+      "actualSeconds": 30.9455445,
+      "htmlJsonMatch": true,
+      "htmlRps": 268.62,
+      "resources": {
+        "samples": 11,
+        "firstSampleSeconds": 1.0358171,
+        "lastSampleSeconds": 29.4618899,
+        "exitCode": null,
+        "serverCpuPercent": {
+          "average": 16.419326054720084,
+          "maximum": 20.25320304037844
+        },
+        "serverWorkingSetMiB": {
+          "average": 145.4598721590909,
+          "maximum": 149.19921875
+        },
+        "serverPrivateMiB": {
+          "average": 372.58700284090907,
+          "maximum": 372.875
+        },
+        "systemCpuPercent": {
+          "average": 95.18181818181819,
+          "maximum": 100
+        },
+        "systemUsedMemoryMiB": {
+          "average": 7531.5234375,
+          "maximum": 7736.796875
+        }
+      }
+    },
+    {
+      "vus": 400,
+      "runId": "62ea94d5-f972-41bb-b90b-9e995a879da4",
+      "attempts": 5909,
+      "created": 5909,
+      "plannedRps": 196.96666666666667,
+      "actualRps": 186.18760288704405,
+      "averageMs": 2074.652166948722,
+      "p95Ms": 3389.8701199999996,
+      "successPercent": 100,
+      "errorPercent": 0,
+      "networkFailures": 0,
+      "httpFailures": 0,
+      "createdRps": 196.96666666666667,
+      "thresholdPassed": true,
+      "stoppedEarly": false,
+      "completedRequests": 5909,
+      "actualSeconds": 31.7368069,
+      "htmlJsonMatch": true,
+      "htmlRps": 185.27,
+      "resources": {
+        "samples": 8,
+        "firstSampleSeconds": 3.9127783999999997,
+        "lastSampleSeconds": 28.876999899999998,
+        "exitCode": 0,
+        "serverCpuPercent": {
+          "average": 12.584514681416168,
+          "maximum": 18.55996449984284
+        },
+        "serverWorkingSetMiB": {
+          "average": 121.69482421875,
+          "maximum": 127.6484375
+        },
+        "serverPrivateMiB": {
+          "average": 372.50830078125,
+          "maximum": 372.83203125
+        },
+        "systemCpuPercent": {
+          "average": 96.25,
+          "maximum": 100
+        },
+        "systemUsedMemoryMiB": {
+          "average": 7483.76904296875,
+          "maximum": 7573.66015625
+        }
+      }
+    },
+    {
+      "vus": 500,
+      "runId": "4f8fbf55-c380-412f-b2cc-f0c0325e1120",
+      "attempts": 10253,
+      "created": 9991,
+      "plannedRps": 341.76666666666665,
+      "actualRps": 319.37378242833796,
+      "averageMs": 1499.3546890373514,
+      "p95Ms": 2040.4124,
+      "successPercent": 97.44465034624012,
+      "errorPercent": 2.555349653759875,
+      "networkFailures": 262,
+      "httpFailures": 0,
+      "createdRps": 333.03333333333336,
+      "thresholdPassed": false,
+      "stoppedEarly": false,
+      "completedRequests": 10253,
+      "actualSeconds": 32.1034492,
+      "htmlJsonMatch": true,
+      "htmlRps": 317.49,
+      "resources": {
+        "samples": 17,
+        "firstSampleSeconds": 1.0599498,
+        "lastSampleSeconds": 28.7154815,
+        "exitCode": 99,
+        "serverCpuPercent": {
+          "average": 18.75886191427203,
+          "maximum": 23.46415961716996
+        },
+        "serverWorkingSetMiB": {
+          "average": 177.90808823529412,
+          "maximum": 185.7109375
+        },
+        "serverPrivateMiB": {
+          "average": 432.45036764705884,
+          "maximum": 436.25
+        },
+        "systemCpuPercent": {
+          "average": 91.3529411764706,
+          "maximum": 100
+        },
+        "systemUsedMemoryMiB": {
+          "average": 7447.68221507353,
+          "maximum": 7502.3359375
+        },
+        "k6CpuPercent": {
+          "average": 5.624059350677558,
+          "maximum": 27.087072897225887
+        },
+        "k6WorkingSetMiB": {
+          "average": 242.77826286764707,
+          "maximum": 264.9453125
+        }
+      }
+    },
+    {
+      "vus": 1000,
+      "runId": "48d87476-3e28-4d24-b35d-ac35f071b4ab",
+      "attempts": 4213,
+      "created": 2496,
+      "plannedRps": null,
+      "actualRps": 239.4423362658439,
+      "averageMs": 2782.705744617299,
+      "p95Ms": 4591.98227,
+      "successPercent": 77.6602364654636,
+      "errorPercent": 22.339763534536402,
+      "networkFailures": 718,
+      "httpFailures": 0,
+      "createdRps": null,
+      "thresholdPassed": false,
+      "stoppedEarly": true,
+      "completedRequests": 3214,
+      "actualSeconds": 13.422856,
+      "htmlJsonMatch": true,
+      "htmlRps": 235.16,
+      "resources": {
+        "samples": 5,
+        "firstSampleSeconds": 1.5024179,
+        "lastSampleSeconds": 13.0512488,
+        "exitCode": 103,
+        "serverCpuPercent": {
+          "average": 12.135244213921155,
+          "maximum": 14.060610439882309
+        },
+        "serverWorkingSetMiB": {
+          "average": 205.621875,
+          "maximum": 220.25390625
+        },
+        "serverPrivateMiB": {
+          "average": 436.3953125,
+          "maximum": 436.80078125
+        },
+        "systemCpuPercent": {
+          "average": 96.8,
+          "maximum": 100
+        },
+        "systemUsedMemoryMiB": {
+          "average": 7754.175,
+          "maximum": 7878.02734375
+        },
+        "k6CpuPercent": {
+          "average": 8.679590483389486,
+          "maximum": 27.1697458476766
+        },
+        "k6WorkingSetMiB": {
+          "average": 401.596875,
+          "maximum": 423.1328125
+        }
+      }
+    }
+  ],
+  "htmlJsonMatch": true,
+  "sourceHashes": {
+    "load-tests/event-spike-test.js": "2f35c972043064dc5d8c10452c64f7acc957ffa351019e6b086ce1c39bcbf439",
+    "load-tests/event-common.js": "7d13b5a4284c862f3bf8f715976e53d1a02ede54634d825518fe54fb703b6d6a",
+    "load-tests/run-issue21-spike.ps1": "a30baa755e237c0932548eab76987be7ac2ba5d96b5cde7cd9ae49365f725cda"
+  },
+  "notes": [
+    "Pre-Redis Baseline: one run, original local API authentication and 100 user IDs, existing server/DB tuning, unchanged persisted records. No Redis dependency or integration was found in build.gradle/src/main. New events are test-generated inserts only.",
+    "One continuous ramping-vus scenario: 50 VU for 10s, ramp to 500 over 1s, hold 500 for 10s, ramp to 50 over 1s, hold 50 for 20s. All request-start samples fall inside their intended phase boundaries; all 42 seconds have VU samples.",
+    "Scheduling deviations: initial activation samples range from 14 to 50 active VUs; at exactly the peak boundary one sample observes 499 before 500. Peak median/max are 500; recovery min/max are exactly 50. These are observed scheduler transitions, not a claim of perfect instantaneous VU activation.",
+    "gracefulRampDown=0s enforces the 1s decline. It intentionally interrupted 450 requests (337 attributed to peak, 113 to decline). They are not counted as HTTP/network errors and are excluded from completed-response success/error denominators. All 450 nevertheless persisted in the DB.",
+    "RPS per phase is request starts divided by planned phase seconds; client-confirmed/s is shown separately. Responses are attributed to request start time and may complete in the next phase or final 10s grace. During a 1s transition RPS can exceed steady-state throughput. Per-phase request starts are not per-second completions.",
+    "Zero observed HTTP errors, network errors and connection refusals; 100% success is among completed responses only. k6 thresholds PASS does not mean zero interrupted work or an independently defined latency SLA.",
+    "Recovery early/late windows are 22-32s and 32-42s based on request starts. p95 and error rate recovered; late mean latency was still above baseline, and late confirmed throughput was lower. This is partial recovery evidence, not proof of complete recovery.",
+    "CPU uses all 8 logical CPUs as 100%. Resource averages are unweighted samples with irregular intervals (1s sleep plus CIM overhead). Resource phase allocation uses collector elapsed time including startup and is approximate; exact phase timing/VU checks use k6 scenario-relative telemetry.",
+    "k6 and Spring Boot run on the same Windows PC with MySQL/Docker and other processes, so CPU and memory competition affect the result. Dashboard aggregation is 1s instead of the Stress tests 5s, with extra phase/VU telemetry and occasional authenticated health GETs; these add monitoring overhead.",
+    "Stress 500 VU begins at 500 immediately and runs 30s, while Spike is warmed at 50 VU and holds 500 for 10s. Stress had 262 startup connection refusals; Spike has none. This difference does not establish improved server capacity or a Redis benefit. Stress 1000 VU is an aborted memory-pressure observation only.",
+    "Safety limits: free physical RAM below 64 MiB, original Java process exit, failed/10s-timeout authenticated health GET, or 75s process deadline trigger stopping only k6. No safety stop or retry was needed in this run. Dashboard HTTP is disabled (port=-1) to avoid browser-connected exit delays."
+  ]
+}
