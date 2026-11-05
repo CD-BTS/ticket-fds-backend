@@ -20,7 +20,9 @@ public enum ResponseCode {
 
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
 	EVENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "EVENT_ALREADY_EXISTS", "동일한 이벤트 식별자로 서로 다른 내용이 요청되었습니다."),
-	REQUEST_FAILED(HttpStatus.BAD_REQUEST, "REQUEST_FAILED", "요청을 처리할 수 없습니다.");
+	REQUEST_FAILED(HttpStatus.BAD_REQUEST, "REQUEST_FAILED", "요청을 처리할 수 없습니다."),
+	CREDIT_NOT_FOUND(HttpStatus.NOT_FOUND, "CREDIT_NOT_FOUND", "신용 정보를 찾을 수 없습니다."),
+	INVALID_QUERY_PARAMETER(HttpStatus.BAD_REQUEST, "INVALID_QUERY_PARAMETER", "조회 조건이 올바르지 않습니다.");
 
 	private final HttpStatus status;
 	private final String code;
