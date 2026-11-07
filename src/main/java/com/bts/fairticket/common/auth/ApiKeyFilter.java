@@ -36,6 +36,11 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = new UrlPathHelper().getPathWithinApplication(request);
+
+		if (path.matches("^/api/v1/users/[^/]+/credit(-history)?$")) {
+       		return true;    
+    	}
+
 		return !path.equals("/api/v1/users") && !path.startsWith("/api/v1/users/")
 				&& !path.equals("/api/v1/events") && !path.startsWith("/api/v1/events/")
 				&& !isAdminPath(path);
