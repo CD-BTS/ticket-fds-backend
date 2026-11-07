@@ -256,3 +256,120 @@ HTTP 상태와 애플리케이션 코드를 별도 필드로 관리합니다. �
 `INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `USER_NOT_FOUND`, `INTERNAL_SERVER_ERROR`의 코드와 메시지는 기존 Notion 명세서의 문구를 그대로 사용합니다. 이벤트 내용 충돌은 이번 UTC 계약 변경에 따라 `DATA_CONFLICT`로 응답합니다. 사용자 재등록과 동일 이벤트 재전송은 오류가 아니라 200 성공 응답입니다.
 
 User/Event MVC 및 MySQL 테스트에서 HTTP 상태·코드·메시지를 함께 검증하며, MVC 테스트는 예상하지 못한 예외가 내부 정보를 노출하지 않고 500 응답으로 변환되는지도 검증합니다.
+
+## 조회 API 공통 규칙
+
+기존 사용자 상세·등록·이벤트 수집 계약은 변경하지 않습니다. 다음 네 조회 API는 HTTP 200 / COMMON_200 및 기존 success/code/data/message 형식을 사용합니다. 조회로 AI 평가·Credit 산출 또는 데이터 변경을 수행하지 않습니다.
+
+| 조건 | 규칙 |
+|---|---|
+| page | 0부터 시작, 기본 0, 음수 불가 |
+| size | 기본 20, 1~100 |
+| sort | 하나의 필드와 방향을 쉼표로 연결. 방향은 소문자 asc 또는 desc |
+
+잘못된 정렬 필드·방향·형식, 숫자 형식·범위는 400 / INVALID_REQUEST입니다. page * size가 정수 offset 범위를 초과해도 400입니다. 동일한 정렬값은 ID를 같은 방향으로 추가 정렬합니다. 요청 사이 데이터가 추가되면 offset 페이지 위치는 바뀔 수 있습니다.
+
+페이지 data 형식:
+
+~~~json
+{"content":[],"page":0,"size":20,"totalElements":0,"totalPages":0,"hasNext":false}
+~~~
+
+필터 결과 없음과 마지막 페이지 초과는 200 및 빈 content입니다. totalElements와 totalPages는 조건에 맞는 전체 결과를 나타냅니다.
+
+## GET /api/v1/users
+
+일반 서비스 키 전용입니다. 인증된 서비스만 조회하며 serviceId 선택은 허용하지 않습니다. 요청 조건은 page, size, sort입니다. 관리자 검색 필터를 지정하면 400입니다.
+
+기본 정렬은 createdAt,desc 및 userId,desc이며 허용 필드는 createdAt, userId, creditScore입니다. content는 기존 UserResponse와 동일한 userId, serviceId, externalUserId, accountStatus, createdAt, creditScore, tier입니다. AI 평가·정책·이력 컬렉션은 포함하지 않습니다.
+
+사용자·Credit은 DTO projection으로 함께 조회하며 사용자별 쿼리를 반복하지 않습니다. 반환할 페이지의 사용자에게 Credit이 없으면 기존 정합성 계약대로 500이며 자동 생성하지 않습니다.
+
+예: GET /api/v1/users?page=0&size=20&sort=creditScore,desc
+
+## GET /api/v1/users/{userId}/events
+
+일반 서비스 키 전용입니다. userId 조건은 기존 상세와 같습니다. 사용자 미존재·타 서비스 사용자는 동일한 404 / USER_NOT_FOUND입니다. 소속 확인 후 사용자 및 서비스 조건으로 이벤트를 조회합니다.
+
+| 조건 | 규칙 |
+|---|---|
+| page, size, sort | 공통 페이지 규칙 |
+| eventType | 선택. BOOKING, CANCEL, CHECK_IN |
+| from | 선택. 발생 시각 하한 포함 |
+| to | 선택. 발생 시각 상한 미포함 |
+
+기본 정렬은 occurredAt,desc 및 eventId,desc이며 허용 필드는 occurredAt, eventId입니다. 기간은 from <= occurredAt < to이며 둘 다 있으면 from < to여야 합니다. ISO 8601 오프셋이 필수이며 UTC로 정규화합니다. 정규화 후 1000~9999년·초 단위 정밀도를 요구합니다. 오프셋 누락·잘못된 날짜·0이 아닌 소수 초는 400입니다.
+
+content는 기존 EventResponse와 동일합니다. eventId는 64비트 JSON 정수, occurredAt은 UTC Z 문자열이며 metadata 원형을 유지합니다. 과거 KST 데이터는 변환하지 않으므로 기존 명세의 시간 기준 확인이 필요합니다.
+
+예: GET /api/v1/users/{userId}/events?eventType=BOOKING&from=2026-01-01T00:00:00Z&to=2026-02-01T00:00:00Z
+
+양수 오프셋의 +는 URL에서 %2B로 인코딩합니다.
+
+## 관리자 인증 및 데이터 범위
+
+X-API-Key를 유지하며 별도 환경변수 BTS_ADMIN_API_KEYS를 설정합니다.
+
+~~~json
+[
+  {"hash":"<64자리 SHA-256 해시>","allServices":false,"services":["ticket-service-a","ticket-service-b"]},
+  {"hash":"<다른 64자리 SHA-256 해시>","allServices":true,"services":[]}
+]
+~~~
+
+서비스 관리자는 allServices=false와 비어 있지 않은 services, 전체 관리자는 allServices=true와 빈 services를 사용합니다. 서비스 ID는 최대 50자이며 공백 문자열·앞뒤 공백은 불가합니다. 키 원문을 저장·반환·로그 출력하지 않습니다. 관리자 키 사이 및 기존 서비스 키와 같은 해시는 허용하지 않습니다. 잘못된 설정은 시작에 실패합니다. 미설정 또는 []이면 관리자 키를 인증하지 않습니다.
+
+- 일반 서비스 키로 admin 또는 dashboard 접근: 403 / FORBIDDEN.
+- 관리자 키로 users 또는 events 접근: 403 / FORBIDDEN. 등록·수집용 서비스 키와 분리합니다.
+- 키 누락·오류·복수 헤더: 401 / UNAUTHORIZED.
+- serviceId 생략: 서비스 관리자는 허용 서비스 전체, 전체 관리자는 모든 서비스.
+- serviceId 지정: 권한 내 해당 서비스만 조회. 권한 밖이면 403 / FORBIDDEN.
+- 서비스 ID 권한은 대소문자·바이트를 구분하며 DB의 대소문자 무시 collation으로 범위가 확대되지 않습니다.
+
+보호 경로는 /api/v1/admin 및 하위 경로, /api/v1/dashboard 및 하위 경로입니다. 기존 서비스 키 환경변수와 동작을 유지합니다.
+
+## GET /api/v1/admin/users
+
+관리자 키 전용이며 content는 UserResponse입니다. 상세 API를 사용자별로 반복 호출하지 않습니다.
+
+| 조건 | 규칙 |
+|---|---|
+| page, size, sort | 사용자 목록과 동일 |
+| serviceId | 권한 범위 내 서비스 선택 |
+| userId | 내부 ID 정확 검색, 1~50자 |
+| externalUserId | 외부 ID 정확 검색, 1~100자 |
+| accountStatus | ACTIVE 또는 SUSPENDED |
+| tier | 저장된 등급 문자열 정확 검색, 1~20자 |
+| minCreditScore, maxCreditScore | 각각 0~100, 최소 <= 최대 |
+| createdFrom, createdTo | 기존 LocalDateTime 형식. 하한 포함·상한 미포함, from < to |
+
+모든 조건은 AND로 결합하며 공백만 입력은 400입니다. 식별자·등급 검색은 기존 DB 문자열 비교 규칙을 유지하지만 서비스 권한 범위는 바이트 단위로 제한합니다. 새 등급 enum·AI 임계값·최신 정책 필터는 추가하지 않습니다.
+
+예: GET /api/v1/admin/users?serviceId=ticket-service-a&accountStatus=ACTIVE&minCreditScore=70&sort=creditScore,desc
+
+## GET /api/v1/dashboard/summary
+
+관리자 키 전용입니다. 선택 조건은 serviceId(1~50자, 공백만 입력 불가)이며 권한 범위는 관리자 목록과 같습니다. 기간 조건 없는 누적 통계입니다.
+
+data 예시:
+
+~~~json
+{
+  "totalUsers":120,
+  "activeUsers":110,
+  "suspendedUsers":10,
+  "usersWithCredit":120,
+  "averageCreditScore":70.0,
+  "usersByTier":{"BASE":120},
+  "totalEvents":450,
+  "eventsByType":{"BOOKING":300,"CANCEL":100,"CHECK_IN":50}
+}
+~~~
+
+사용자 상태는 user_account 행, Credit은 user_credit의 현재 값, 이벤트는 behavior_event 행을 각각 집계하여 이력 JOIN에 의한 중복 계산을 방지합니다. 이벤트 수는 고유 예약 수가 아닙니다. 평균은 Credit이 있는 사용자만 대상으로 하며 대상이 없으면 null입니다. usersWithCredit으로 누락 여부를 확인할 수 있으며 누락 Credit을 생성하지 않습니다.
+
+빈 범위는 건수 0, 평균 null, usersByTier 빈 객체입니다. BOOKING/CANCEL/CHECK_IN은 0이어도 반환하며 기존 데이터에 다른 유형이 있으면 해당 키도 포함합니다. 집계는 MySQL REPEATABLE_READ 트랜잭션의 동일 스냅샷에서 수행합니다.
+
+이상 사용자 수는 임계값·최신 평가 기준의 별도 합의가 필요하여 포함하지 않습니다. 별도 테이블·Entity·스키마·인덱스 변경은 없습니다. 사용자 복합 정렬과 대시보드 대량 집계는 운영 데이터 규모에서 실행 계획 확인이 필요합니다.
+
+등록 기간 조건은 MySQL DATETIME 범위인 1000~9999년을 사용합니다.

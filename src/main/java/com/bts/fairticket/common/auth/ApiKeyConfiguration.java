@@ -14,7 +14,9 @@ public class ApiKeyConfiguration {
 	}
 
 	@Bean
-	ApiKeyFilter apiKeyFilter(ApiKeyAuthenticator authenticator, JsonMapper jsonMapper) {
-		return new ApiKeyFilter(authenticator, jsonMapper);
+	ApiKeyFilter apiKeyFilter(ApiKeyAuthenticator authenticator, JsonMapper jsonMapper,
+			@Value("${BTS_ADMIN_API_KEYS:[]}") String adminKeys,
+			@Value("${BTS_API_KEY_HASHES:{}}") String serviceKeys) {
+		return new ApiKeyFilter(authenticator, new AdminApiKeyAuthenticator(adminKeys, serviceKeys), jsonMapper);
 	}
 }

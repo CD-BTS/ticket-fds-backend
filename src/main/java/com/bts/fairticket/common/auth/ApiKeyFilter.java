@@ -22,11 +22,14 @@ import com.bts.fairticket.common.response.ResponseCode;
 public class ApiKeyFilter extends OncePerRequestFilter {
 
 	public static final String SERVICE_ATTRIBUTE = "com.bts.fairticket.authenticatedService";
+	public static final String ADMIN_ATTRIBUTE = "com.bts.fairticket.adminScope";
+	private final AdminApiKeyAuthenticator adminAuthenticator;
 	private final ApiKeyAuthenticator authenticator;
 	private final JsonMapper jsonMapper;
 
-	public ApiKeyFilter(ApiKeyAuthenticator authenticator, JsonMapper jsonMapper) {
+	public ApiKeyFilter(ApiKeyAuthenticator authenticator, AdminApiKeyAuthenticator adminAuthenticator, JsonMapper jsonMapper) {
 		this.authenticator = authenticator;
+		this.adminAuthenticator = adminAuthenticator;
 		this.jsonMapper = jsonMapper;
 	}
 
@@ -34,7 +37,13 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = new UrlPathHelper().getPathWithinApplication(request);
 		return !path.equals("/api/v1/users") && !path.startsWith("/api/v1/users/")
-				&& !path.equals("/api/v1/events") && !path.startsWith("/api/v1/events/");
+				&& !path.equals("/api/v1/events") && !path.startsWith("/api/v1/events/")
+				&& !isAdminPath(path);
+	}
+
+	private boolean isAdminPath(String path) {
+		return path.equals("/api/v1/admin") || path.startsWith("/api/v1/admin/")
+				|| path.equals("/api/v1/dashboard") || path.startsWith("/api/v1/dashboard/");
 	}
 
 	@Override
@@ -45,7 +54,17 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 			if (Collections.list(request.getHeaders("X-API-Key")).size() != 1) {
 				throw new ApiException(ResponseCode.UNAUTHORIZED);
 			}
-			service = authenticator.authenticate(request.getHeader("X-API-Key"));
+			String key = request.getHeader("X-API-Key");
+			AdminScope admin = adminAuthenticator.authenticate(key);
+			boolean adminPath = isAdminPath(new UrlPathHelper().getPathWithinApplication(request));
+			if (admin != null) {
+				if (!adminPath) throw new ApiException(ResponseCode.FORBIDDEN);
+				request.setAttribute(ADMIN_ATTRIBUTE, admin);
+				service = null;
+			} else {
+				service = authenticator.authenticate(key);
+				if (adminPath) throw new ApiException(ResponseCode.FORBIDDEN);
+			}
 		} catch (ApiException exception) {
 			ResponseCode code = exception.getResponseCode();
 			response.setStatus(code.getStatus().value());
