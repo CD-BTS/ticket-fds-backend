@@ -1,0 +1,62 @@
+﻿{
+    "runId":  "d7670ad9-e74a-4323-aa99-fded01c09d19",
+    "baselineRunId":  "b6536e3d-f6a4-4a3f-9f49-da299e3a732f",
+    "baseline":  {
+                     "vus":  200,
+                     "seconds":  30,
+                     "attempts":  5678,
+                     "created":  5678,
+                     "plannedRps":  189.26666666666668,
+                     "actualRps":  184.46509496926163,
+                     "averageMs":  1067.8893394152908,
+                     "p95Ms":  2004.992965,
+                     "successPercent":  100,
+                     "errorPercent":  0,
+                     "httpFailedPercent":  0,
+                     "networkFailures":  0
+                 },
+    "current":  {
+                    "vus":  300,
+                    "seconds":  30,
+                    "attempts":  8378,
+                    "created":  8378,
+                    "plannedRps":  279.26666666666665,
+                    "actualRps":  270.73364309359624,
+                    "averageMs":  1085.7132992002867,
+                    "p95Ms":  1531.02393,
+                    "successPercent":  100,
+                    "errorPercent":  0,
+                    "httpFailedPercent":  0,
+                    "networkFailures":  0
+                },
+    "rpsChangePercent":  47.551954913701991,
+    "averageChangePercent":  1.6690830338989227156107878900,
+    "p95ChangePercent":  -23.639436310939874045892225860,
+    "resourceSummary":  {
+                            "sampleCount":  11,
+                            "window":  "First 30 seconds after launching k6; approximately the active phase, including startup",
+                            "serverPid":  6324,
+                            "logicalProcessors":  8,
+                            "serverCpuPercent":  {
+                                                     "average":  16.419326054720084,
+                                                     "maximum":  20.253203040378441
+                                                 },
+                            "serverWorkingSetMiB":  {
+                                                        "average":  145.45987215909091,
+                                                        "maximum":  149.19921875
+                                                    },
+                            "serverPrivateMiB":  {
+                                                     "average":  372.58700284090907,
+                                                     "maximum":  372.875
+                                                 },
+                            "systemCpuPercent":  {
+                                                     "average":  95.181818181818187,
+                                                     "maximum":  100
+                                                 },
+                            "systemUsedMemoryMiB":  {
+                                                        "average":  7531.5234375,
+                                                        "maximum":  7736.796875
+                                                    }
+                        },
+    "k6ExitCode":  null
+}

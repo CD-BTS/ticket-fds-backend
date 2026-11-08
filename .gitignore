@@ -1,37 +1,25 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+﻿# 환경 변수 및 비밀 정보
+.env
+.env.*
+!.env.example
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# 프론트엔드 의존성 및 빌드 결과
+node_modules/
+dist/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+# 백엔드 빌드 및 Gradle
+.gradle/
+**/build/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+# IDE 설정
+.idea/
 .vscode/
+*.iml
+
+# 로그 및 임시 파일
+*.log
+*.tmp
+
+# 운영체제 파일
+.DS_Store
+Thumbs.db

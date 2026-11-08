@@ -1,0 +1,146 @@
+﻿{
+    "runId":  "4f8fbf55-c380-412f-b2cc-f0c0325e1120",
+    "result":  {
+                   "vus":  500,
+                   "runId":  "4f8fbf55-c380-412f-b2cc-f0c0325e1120",
+                   "attempts":  10253,
+                   "created":  9991,
+                   "plannedRps":  341.76666666666665,
+                   "actualRps":  319.37378242833796,
+                   "averageMs":  1499.3546890373514,
+                   "p95Ms":  2040.4124,
+                   "successPercent":  97.4446503462401200,
+                   "errorPercent":  2.555349653759875200,
+                   "networkFailures":  262,
+                   "httpFailures":  0,
+                   "createdRps":  333.03333333333336,
+                   "thresholdPassed":  false,
+                   "htmlJsonMatch":  true,
+                   "htmlRps":  317.49,
+                   "resources":  {
+                                     "samples":  17,
+                                     "firstSampleSeconds":  1.0599498,
+                                     "lastSampleSeconds":  28.7154815,
+                                     "exitCode":  99,
+                                     "serverCpuPercent":  {
+                                                              "average":  18.758861914272028,
+                                                              "maximum":  23.464159617169958
+                                                          },
+                                     "serverWorkingSetMiB":  {
+                                                                 "average":  177.90808823529412,
+                                                                 "maximum":  185.7109375
+                                                             },
+                                     "serverPrivateMiB":  {
+                                                              "average":  432.45036764705884,
+                                                              "maximum":  436.25
+                                                          },
+                                     "systemCpuPercent":  {
+                                                              "average":  91.3529411764706,
+                                                              "maximum":  100
+                                                          },
+                                     "systemUsedMemoryMiB":  {
+                                                                 "average":  7447.68221507353,
+                                                                 "maximum":  7502.3359375
+                                                             },
+                                     "k6CpuPercent":  {
+                                                          "average":  5.624059350677558,
+                                                          "maximum":  27.087072897225887
+                                                      },
+                                     "k6WorkingSetMiB":  {
+                                                             "average":  242.77826286764707,
+                                                             "maximum":  264.9453125
+                                                         }
+                                 }
+               },
+    "deltaFrom400":  {
+                         "comparedToVus":  400,
+                         "rpsPercent":  73.514977153494657750635011790,
+                         "createdRpsPercent":  69.081062785581327312894520470,
+                         "averageLatencyPercent":  -27.729828020158422113569500140,
+                         "p95Percent":  -39.808537561315173905074281880
+                     },
+    "totalFailures":  262,
+    "httpErrors":  0,
+    "networkErrors":  262,
+    "responseValidationFailures":  0,
+    "loggedErrorGroups":  [
+                              {
+                                  "time":  "2026-10-27T20:10:37+09:00",
+                                  "type":  "network_error",
+                                  "status":  0,
+                                  "message":  "dial: connection refused",
+                                  "code":  1212,
+                                  "loggedCount":  262
+                              }
+                          ],
+    "dbVerification":  {
+                           "beforeAuth":  {
+                                              "phase":  "before_auth",
+                                              "utc":  "2026-10-27T11:10:36.6163748Z",
+                                              "total":  163921,
+                                              "service":  143648,
+                                              "run":  0,
+                                              "distinctRun":  0,
+                                              "duplicateKeys":  0
+                                          },
+                           "beforeLoad":  {
+                                              "phase":  "before_load",
+                                              "utc":  "2026-10-27T11:10:37.1820831Z",
+                                              "total":  163922,
+                                              "service":  143649,
+                                              "run":  0,
+                                              "distinctRun":  0,
+                                              "duplicateKeys":  0
+                                          },
+                           "afterLoad":  {
+                                             "phase":  "after_load",
+                                             "utc":  "2026-10-27T11:11:10.5215701Z",
+                                             "total":  173913,
+                                             "service":  153640,
+                                             "run":  9991,
+                                             "distinctRun":  9991,
+                                             "duplicateKeys":  0
+                                         },
+                           "totalAddedDuringLoad":  9991,
+                           "serviceAddedDuringLoad":  9991,
+                           "totalAddedIncludingAuth":  9992,
+                           "authenticationProbeRows":  1,
+                           "runCountMatchesCreated":  true,
+                           "duplicateKeyGroups":  0
+                       },
+    "execution":  {
+                      "sameMachine":  true,
+                      "computerName":  "BOOK-B9L8E7JSGD",
+                      "vus":  500,
+                      "apiBaseUrl":  "http://localhost:8080",
+                      "logicalProcessors":  8,
+                      "k6ProcessName":  "k6",
+                      "dashboardPeriod":  "5s",
+                      "serverPid":  6324,
+                      "k6StartUtc":  "2026-10-27T11:10:37.2105044Z",
+                      "durationSeconds":  30,
+                      "k6Pid":  30652,
+                      "dashboardPort":  -1,
+                      "serverStartUtc":  "2026-10-27T04:08:19.7601600Z",
+                      "serverProcessName":  "java.exe"
+                  },
+    "postcheck":  {
+                      "utc":  "2026-10-27T11:12:27.4949919Z",
+                      "serverPid":  6324,
+                      "processName":  "java.exe",
+                      "creationUtc":  "2026-10-27T04:08:19.7601600Z",
+                      "listening":  true,
+                      "springBootCommand":  true,
+                      "activeK6Count":  0
+                  },
+    "notes":  [
+                  "Only one 500 VU x 30 second load run was executed. Initial root DB authentication failed before preflight/load; the existing runtime DB credentials were then used via stdin without changing credentials or saving secrets.",
+                  "Same 400 VU workload, dashboard=true, open=false, port=-1, period=5s, 100 users and one-second sleep plus CIM resource collection. Extra DB queries were executed outside the load interval; k6 CPU/memory sampling was added.",
+                  "All 262 logged failures occurred at 20:10:37 +09:00 (startup). They match the network failure counter. HTTP status=0 and error_code=1212 with dial: connection refused; no HTTP error responses or validation failures were recorded. Request Failed warnings and EVENT FAILURE lines describe the same requests, not separate failures.",
+                  "Connection refusal is observed evidence; accept-queue overflow, server scheduling or other OS causes cannot be distinguished by this test. The Java PID/start time remained unchanged and port 8080 was listening after the test.",
+                  "k6 and Spring Boot ran as local processes on the same Windows PC using localhost:8080 and 8 logical CPUs. They compete with each other, MySQL/Docker and other processes for CPU and memory; resource sampling also adds overhead. High system CPU does not establish Java-only CPU saturation.",
+                  "500 VU delivered higher throughput and lower latency than the 400 VU single run but failed the success\u003e=99% and error\u003c=1% criteria. The non-monotonic throughput and lower whole-system CPU average argue against treating these single runs as a reliable server capacity curve. Fast failed connections are included in aggregate latency and total-request RPS; successful created/s is reported separately.",
+                  "Resource statistics are unweighted sample averages/maxima in the first 30 seconds after launching k6, including startup. Sampling intervals exceed one second because CIM collection takes time. CPU is normalized to all 8 logical CPUs; resident and private committed memory are not Java heap measurements.",
+                  "No existing DB records were updated/deleted; no server performance settings changed. New events were created by the authenticated preflight and load workload. No 1000 VU test was run."
+              ]
+}
