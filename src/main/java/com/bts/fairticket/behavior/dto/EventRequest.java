@@ -31,7 +31,7 @@ public record EventRequest(
 	@JsonIgnore
 	@AssertTrue(message = "BOOKING/CANCEL은 bookingId, CHECK_IN은 ticketId가 필요합니다.")
 	public boolean isRequiredIdentifierValid() {
-		if (eventType == null) {
+		if (eventType == null || eventType == EventType.BOOKING_ATTEMPT) {
 			return true;
 		}
 		String identifier = eventType == EventType.CHECK_IN ? ticketId : bookingId;
@@ -61,6 +61,7 @@ public record EventRequest(
 	@JsonIgnore
 	@AssertTrue(message = "bookingDurationSeconds는 0 이상의 숫자, deviceChanged는 boolean이어야 합니다.")
 	public boolean isMetadataValid() {
+		if (eventType == EventType.BOOKING_ATTEMPT && !AttemptMetadata.valid(metadata)) return false;
 		if (metadata == null) {
 			return true;
 		}
