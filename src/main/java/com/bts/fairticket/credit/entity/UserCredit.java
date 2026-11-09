@@ -2,6 +2,7 @@ package com.bts.fairticket.credit.entity;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -32,7 +33,7 @@ public class UserCredit {
 	private String userId;
 
 	@MapsId
-	@OneToOne(fetch = FetchType.LAZY, optional = false)
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, optional = false)
 	@JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
 	private UserAccount user;
 
