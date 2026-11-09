@@ -72,6 +72,25 @@ docker compose logs --tail 50 mysql
 
 기존 로컬 MySQL을 사용하는 경우 Compose 실행은 생략하고 `DB_URL`을 해당 서버와 DB로 지정합니다. 3306 포트를 다른 MySQL이 사용 중이라면 컨테이너를 추가 실행하기 전에 확인합니다.
 
+```
+powershell
+# 컨테이너 실행 (10초 대기 권장)
+docker run --name fairticket-mysql `
+  -e MYSQL_ROOT_PASSWORD=userpassword `
+  -e MYSQL_DATABASE=fairticket_db `
+  -e MYSQL_USER=user `
+  -e MYSQL_PASSWORD=userpassword `
+  -p 3306:3306 -d mysql:8.0
+```
+
+#### 스키마 적용 (최초 1회)
+
+컨테이너가 정상 실행된 후 호스트의 DDL 파일을 컨테이너로 복사하여 적용합니다:
+
+```powershell
+docker cp .\db\schema.sql fairticket-mysql:/schema.sql
+docker exec -it fairticket-mysql mysql -u root -puserpassword --default-character-set=utf8mb4 fairticket_db -e "source /schema.sql"
+
 ### 4. Spring Boot 실행 환경변수 설정
 
 Docker Compose는 `.env`를 읽지만 **Spring Boot와 Gradle은 `.env`를 자동으로 읽지 않습니다.** 실행 터미널의 환경변수 또는 IDE의 Run Configuration에 동일한 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`를 설정합니다.
