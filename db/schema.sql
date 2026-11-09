@@ -55,6 +55,35 @@ CREATE TABLE `policy_decision` (
   `decided_at` datetime NOT NULL DEFAULT (now()) COMMENT '정책 결정 시각'
 );
 
+-- 7. 예매 및 관람 이력 테이블
+CREATE TABLE IF NOT EXISTS booking_history (
+    booking_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    booking_reference VARCHAR(50) NOT NULL COMMENT '외부 예매 고유 번호',
+    event_id VARCHAR(50) NULL COMMENT '공연/경기 ID',
+    status VARCHAR(20) NOT NULL COMMENT 'COMPLETED, NO_SHOW, AUTO_CANCELLED, CANCELLED',
+    booked_at DATETIME NOT NULL COMMENT '예매 시점',
+    event_at DATETIME NOT NULL COMMENT '공연/경기 관람 예정 시점',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_booking_user FOREIGN KEY (user_id) REFERENCES user_account (user_id) ON DELETE CASCADE,
+    INDEX idx_booking_user_status (user_id, status),
+    INDEX idx_booking_user_event (user_id, event_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. 결제 카드 식별 정보 테이블 (다계정 카드 공유 탐지용)
+CREATE TABLE IF NOT EXISTS user_card (
+    card_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    card_hash VARCHAR(64) NOT NULL COMMENT '카드 번호 SHA-256 해시값',
+    card_company VARCHAR(30) NULL COMMENT '카드사명 (예: 현대, 신한)',
+    masked_card_no VARCHAR(20) NULL COMMENT '마스킹 번호 (예: 1234-56**-****-1234)',
+    last_used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_card_user FOREIGN KEY (user_id) REFERENCES user_account (user_id) ON DELETE CASCADE,
+    INDEX idx_user_card_hash (card_hash),
+    INDEX idx_user_card_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE UNIQUE INDEX `user_account_index_0` ON `user_account` (`service_id`, `external_user_id`);
 
 CREATE INDEX `user_account_index_1` ON `user_account` (`service_id`);

@@ -57,11 +57,20 @@ public class CreditHistory {
 	@Column(name = "created_at", nullable = false, columnDefinition = "datetime", insertable = false, updatable = false)
 	private LocalDateTime createdAt;
 
-	public CreditHistory(UserAccount user, BehaviorEvent event, Integer scoreBefore, Integer scoreAfter, String reason) {
-		this.user = user;
-		this.event = event;
-		this.scoreBefore = scoreBefore;
-		this.scoreAfter = scoreAfter;
-		this.reason = reason;
-	}
+// scoreBefore, scoreAfter를 받는 생성자 정의
+    public CreditHistory(UserAccount user, Integer scoreBefore, Integer scoreAfter, String reason) {
+        this.user = user;
+        this.scoreBefore = scoreBefore;
+        this.scoreAfter = scoreAfter;
+        this.reason = reason;
+    }
+
+    // 특정 behaviorEvent와 연계될 때를 위한 오버로딩 생성자
+    public CreditHistory(UserAccount user, BehaviorEvent event, Integer scoreBefore, Integer scoreAfter, String reason) {
+        this.user = user;
+        this.event = event;
+        this.scoreBefore = scoreBefore;
+        this.scoreAfter = scoreAfter;
+        this.reason = reason;
+    }
 }

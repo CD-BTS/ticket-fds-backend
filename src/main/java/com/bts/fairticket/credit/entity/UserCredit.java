@@ -53,4 +53,10 @@ public class UserCredit {
 	public UserCredit(UserAccount user) {
 		this.user = user;
 	}
+
+	public void updateCreditScore(int newScore, String tier) {
+    this.creditScore = newScore;
+    this.tier = tier;
+    // updatedAt 필드가 있다면 LocalDateTime.now() 갱신
+}
 }
