@@ -77,6 +77,65 @@ class QueryApiMySqlTests {
 	}
 
 	@Test
+	void adminDetailAndHistoriesReuseCurrentDataAndProtectOtherServices() throws Exception {
+		long assessmentId = jdbc.queryForObject("select max(assessment_id) from risk_assessment where user_id=?", Long.class, first);
+		jdbc.update("insert into policy_decision(user_id,assessment_id,context,credit_score_at_decision,anomaly_score_at_decision,action,decided_at) values (?,?,'BOOKING_ATTEMPT',80,0.4,'ALLOW','2026-01-01 00:00:00')", first, assessmentId);
+		jdbc.update("insert into policy_decision(user_id,assessment_id,context,credit_score_at_decision,anomaly_score_at_decision,action,decided_at) values (?,?,'QUEUE_JOIN',80,0.4,'DELAY','2026-01-01 00:00:00')", first, assessmentId);
+		mvc.perform(get("/api/v1/admin/users/" + first).header("X-API-Key", ADMIN))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.user.creditScore").value(80))
+				.andExpect(jsonPath("data.user.anomalyScore").value(0.4))
+				.andExpect(jsonPath("data.latestPolicy.action").value("DELAY"));
+		mvc.perform(get("/api/v1/admin/users/" + first + "/assessments").header("X-API-Key", ADMIN)
+				.param("size", "1").param("sort", "anomalyScore,desc"))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.totalElements").value(2))
+				.andExpect(jsonPath("data.hasNext").value(true))
+				.andExpect(jsonPath("data.content[0].anomalyScore").value(0.4))
+				.andExpect(jsonPath("data.content[0].policyAction").value("DELAY"))
+				.andExpect(jsonPath("data.content[0].decisionResult").doesNotExist())
+				.andExpect(jsonPath("data.content[0].modelVersion").value("test"));
+		mvc.perform(get("/api/v1/admin/users/" + first + "/assessments").header("X-API-Key", ADMIN)
+				.param("size", "1").param("page", "1").param("sort", "anomalyScore,desc"))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.content[0].anomalyScore").value(0.3))
+				.andExpect(jsonPath("data.content[0]").value(org.hamcrest.Matchers.hasEntry("policyAction", null)))
+				.andExpect(jsonPath("data.content[0].decisionResult").doesNotExist());
+		mvc.perform(get("/api/v1/admin/users/" + first + "/events").header("X-API-Key", ADMIN)
+				.param("eventType", "BOOKING").param("from", "2026-01-01T00:00:00Z")
+				.param("to", "2026-01-02T00:00:00Z").param("sort", "eventId,asc").param("size", "1"))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.totalElements").value(1))
+				.andExpect(jsonPath("data.content[0].eventType").value("BOOKING"));
+		for (String suffix : java.util.List.of("", "/events", "/assessments")) {
+			mvc.perform(get("/api/v1/admin/users/" + foreign + suffix).header("X-API-Key", ADMIN))
+					.andExpect(status().isNotFound());
+			mvc.perform(get("/api/v1/admin/users/" + foreign + suffix).header("X-API-Key", GLOBAL))
+					.andExpect(status().isOk());
+			mvc.perform(get("/api/v1/admin/users/missing" + suffix).header("X-API-Key", ADMIN))
+					.andExpect(status().isNotFound());
+		}
+		mvc.perform(get("/api/v1/admin/users/" + second + "/assessments").header("X-API-Key", ADMIN))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.content").isEmpty());
+		for (String sort : java.util.List.of("unknown,desc", "assessedAt,ASC", "assessedAt")) {
+			mvc.perform(get("/api/v1/admin/users/" + first + "/assessments").header("X-API-Key", ADMIN).param("sort", sort))
+					.andExpect(status().isBadRequest());
+		}
+		mvc.perform(get("/api/v1/admin/users/" + first + "/assessments").header("X-API-Key", ADMIN).param("size", "101"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void adminListAddsLatestAssessmentWithoutChangingGeneralContractOrQueryPerUser() throws Exception {
+		var stats = emf.unwrap(SessionFactory.class).getStatistics();
+		stats.clear();
+		mvc.perform(get("/api/v1/admin/users").header("X-API-Key", ADMIN).param("sort", "creditScore,desc"))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.totalElements").value(2))
+				.andExpect(jsonPath("data.content[0].anomalyScore").value(0.4))
+				.andExpect(jsonPath("data.content[0].lastAssessedAt").exists())
+				.andExpect(jsonPath("data.content[1].anomalyScore").isEmpty());
+		assertEquals(3, stats.getPrepareStatementCount());
+		mvc.perform(get("/api/v1/users").header("X-API-Key", SERVICE_KEY))
+				.andExpect(status().isOk()).andExpect(jsonPath("data.content[0].anomalyScore").doesNotExist());
+	}
+
+	@Test
 	void userPagesAreScopedStableAndUseTwoQueriesWithoutNPlusOne() throws Exception {
 		var stats = emf.unwrap(SessionFactory.class).getStatistics();
 		stats.clear();
