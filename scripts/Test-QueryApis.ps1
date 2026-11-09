@@ -12,7 +12,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'The specified MySQL image must already be available locally.' }
     $testPassword = [Guid]::NewGuid().ToString('N') + [Guid]::NewGuid().ToString('N')
     $containerName = 'bts-query-tests-' + [Guid]::NewGuid().ToString('N')
-    $containerId = docker run --rm -d --name $containerName -p '127.0.0.1::3306' --env "MYSQL_ROOT_PASSWORD=$testPassword" --env 'MYSQL_DATABASE=fairticket_test' --env 'MYSQL_USER=fairticket_test' --env "MYSQL_PASSWORD=$testPassword" $MySqlImage
+    # Match the explicit collation of booking_history/user_card FK columns in the existing schema.
+    $containerId = docker run --rm -d --name $containerName -p '127.0.0.1::3306' --env "MYSQL_ROOT_PASSWORD=$testPassword" --env 'MYSQL_DATABASE=fairticket_test' --env 'MYSQL_USER=fairticket_test' --env "MYSQL_PASSWORD=$testPassword" $MySqlImage --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     if ($LASTEXITCODE -ne 0 -or $containerId -notmatch '^[a-f0-9]{64}$') { throw 'Could not start isolated MySQL.' }
     $ready = $false
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
@@ -35,7 +36,7 @@ try {
     $env:DB_PASSWORD = $testPassword
     $env:JPA_SHOW_SQL = 'false'
     Write-Output 'Running unit/MVC and MySQL suites against an isolated database.'
-    & (Join-Path $PSScriptRoot '../gradlew.bat') test mysqlTest --no-daemon
+    & (Join-Path $PSScriptRoot '../gradlew.bat') test mysqlTest --no-daemon --rerun-tasks
     if ($LASTEXITCODE -ne 0) { throw 'Test suite failed. See build/reports/tests.' }
 } finally {
     foreach ($name in $previous.Keys) { [Environment]::SetEnvironmentVariable($name, $previous[$name], 'Process') }

@@ -444,3 +444,265 @@ decidedAt 내림차순, 동률이면 decisionId 내림차순으로 선택하며 
 
 기존 일반 사용자 API의 DTO와 Demo Ticketing 계약은 변경하지 않습니다.
 Credit 전용 두 API의 Bearer 형식 검사 및 서비스 범위 검증 누락은 이번 변경 대상에서 제외했으며 별도 보완이 필요합니다.
+
+## 공연 정보 연동 및 관리자 조회 (#38)
+
+공연 원본은 외부 티켓팅 서비스에 있습니다. BTS는 관리자 조회에 필요한 복제 정보만 저장하며 외부 DB에 연결하지 않습니다.
+공연은 `(serviceId, concertId)`로 식별합니다. ID는 대소문자를 구분하며 concertId 및 관리자 serviceId는 공백 없이 1~50자입니다.
+공연 시각은 오프셋을 포함한 ISO 8601로 입력하고 UTC `Z`로 반환합니다. UTC 기준 1000~9999년, 초 단위만 허용합니다.
+DB에는 UTC DATETIME을 저장하며 클라이언트에서 화면 시간대로 변환합니다.
+
+공통 응답은 `success/code/data/message`이며 성공은 200 / COMMON_200 / "요청이 성공했습니다."입니다.
+아래 JSON은 공통 응답의 **data** 예시입니다. 전체 응답 예시는 다음과 같습니다.
+
+```json
+{"success":true,"code":"COMMON_200","data":{"serviceId":"ticket-service-a","concertId":"c1","name":"BTS Concert","startsAt":"2026-12-01T10:00:00Z","endsAt":"2026-12-01T12:00:00Z","venue":"Seoul Hall"},"message":"요청이 성공했습니다."}
+```
+
+### PUT /api/v1/concerts/{concertId} — 외부 공연 등록·갱신
+
+#### 1. Header
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| X-API-Key | O | 일반 서비스 키 1개. 서비스 ID는 서버에서 결정 |
+| Content-Type | O | application/json |
+
+#### 2. Request
+
+| 위치 | 필드 | 타입 | 필수 | 조건 |
+|---|---|---|---|---|
+| Path Variable | concertId | string | O | 외부 서비스 공연 ID, 공백 없이 1~50자 |
+| Query String | 없음 | — | — | serviceId를 선택하는 기능 없음 |
+| Body | name | string | O | 공백만 입력 불가, 최대 200자 |
+| Body | startsAt | string(datetime) | O | 오프셋 필수, UTC 초 단위 |
+| Body | endsAt | string(datetime) | O | startsAt보다 뒤, 동일 시각 불가 |
+| Body | venue | string | O | 공백만 입력 불가, 최대 255자 |
+
+```http
+PUT /api/v1/concerts/c1
+X-API-Key: <서비스 키>
+Content-Type: application/json
+
+{"name":"BTS Concert","startsAt":"2026-12-01T19:00:00+09:00","endsAt":"2026-12-01T21:00:00+09:00","venue":"Seoul Hall"}
+```
+
+#### 3. Response
+
+신규·재전송·갱신 모두 200입니다. 동일 키는 원자적 upsert로 갱신하며 중복 행을 만들지 않습니다.
+PATCH가 아닌 전체 기본정보 교체이며 name/시작/종료/장소를 매번 모두 전송합니다.
+
+| data 필드 | 타입 | 의미 |
+|---|---|---|
+| serviceId | string | 인증된 서비스 ID |
+| concertId | string | 외부 공연 ID |
+| name | string | 공연명 |
+| startsAt | string(datetime) | UTC 시작 시각 |
+| endsAt | string(datetime) | UTC 종료 시각 |
+| venue | string | 장소 |
+
+```json
+{"serviceId":"ticket-service-a","concertId":"c1","name":"BTS Concert","startsAt":"2026-12-01T10:00:00Z","endsAt":"2026-12-01T12:00:00Z","venue":"Seoul Hall"}
+```
+
+#### 4. Error
+
+| HTTP | code | 원인 |
+|---|---|---|
+| 400 | INVALID_REQUEST | 필수 필드/길이/ID/시각/기간/JSON 오류 |
+| 401 | UNAUTHORIZED | 키 누락·오류·복수 헤더 |
+| 403 | FORBIDDEN | 관리자 키 사용 |
+| 415 | UNSUPPORTED_MEDIA_TYPE | 지원하지 않는 요청 형식 |
+| 500 | INTERNAL_SERVER_ERROR | DB 미적용 또는 처리되지 않은 내부 오류 |
+
+#### 5. Exception
+
+| 상황 | 처리 |
+|---|---|
+| 동일 공연 재전송·동시 등록 | 복합 UNIQUE 및 단일 upsert SQL로 보호. 중복 생성 없음 |
+| 다른 서비스의 같은 concertId | 별도 공연으로 저장. 다른 서비스 행 변경 안 함 |
+| 이벤트가 먼저 도착한 공연 | 등록 가능. 등록 후 기존 이벤트가 조회에 연결됨 |
+| 공연 삭제·취소 상태 동기화 | 미구현. 별도 정책 합의 필요 |
+
+### GET /api/v1/admin/concerts — 관리자 공연 목록
+
+#### 1. Header
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| X-API-Key | O | 관리자 키 1개. 일반 서비스 키는 403 |
+
+#### 2. Request
+
+Path Variable과 Body는 없습니다.
+
+| Query String | 타입 | 필수 | 기본값/조건 |
+|---|---|---|---|
+| serviceId | string | O | 관리자 권한 내 서비스, 공백 없이 1~50자 |
+| page | integer | X | 0, 0 이상 |
+| size | integer | X | 20, 1~100 |
+| sort | string | X | startsAt,desc. startsAt / concertId / name 및 asc / desc |
+
+`GET /api/v1/admin/concerts?serviceId=ticket-service-a&page=0&size=20&sort=startsAt,desc`
+
+#### 3. Response
+
+| data 필드 | 타입 | 설명 |
+|---|---|---|
+| content | ConcertResponse[] | 위 PUT 응답의 serviceId/concertId/name/startsAt/endsAt/venue |
+| page, size | integer | 현재 페이지·크기 |
+| totalElements, totalPages | integer | 전체 공연 수·전체 페이지 수 |
+| hasNext | boolean | 다음 페이지 여부 |
+
+```json
+{"content":[{"serviceId":"ticket-service-a","concertId":"c1","name":"BTS Concert","startsAt":"2026-12-01T10:00:00Z","endsAt":"2026-12-01T12:00:00Z","venue":"Seoul Hall"}],"page":0,"size":20,"totalElements":1,"totalPages":1,"hasNext":false}
+```
+
+동률은 concertId를 같은 방향으로 정렬합니다. 목록에서는 이벤트 집계를 수행하지 않으며 통계는 상세에서 제공합니다.
+
+#### 4. Error
+
+| HTTP | code | 원인 |
+|---|---|---|
+| 400 | INVALID_REQUEST | serviceId 누락/형식, 페이지/offset/정렬 오류 |
+| 401 | UNAUTHORIZED | 키 누락·오류·복수 헤더 |
+| 403 | FORBIDDEN | 일반 서비스 키 또는 허용 범위 밖 serviceId |
+| 500 | INTERNAL_SERVER_ERROR | DB 또는 내부 오류 |
+
+#### 5. Exception
+
+| 상황 | 처리 |
+|---|---|
+| 등록된 공연 없음·페이지 초과 | 200 및 빈 content |
+| 이벤트만 있는 미등록 공연 | 목록 제외 |
+| 전체 관리자 | 전체 관리자도 serviceId를 반드시 지정 |
+
+### GET /api/v1/admin/concerts/{concertId} — 관리자 공연 상세
+
+#### 1. Header
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| X-API-Key | O | 관리자 키 1개 |
+
+#### 2. Request
+
+| 위치 | 필드 | 타입 | 필수 | 조건 |
+|---|---|---|---|---|
+| Path Variable | concertId | string | O | 공백 없이 1~50자 |
+| Query String | serviceId | string | O | 공백 없이 1~50자, AdminScope 범위 내 |
+| Body | 없음 | — | — | — |
+
+`GET /api/v1/admin/concerts/c1?serviceId=ticket-service-a`
+
+#### 3. Response
+
+| data 필드 | 타입 | 설명 |
+|---|---|---|
+| concert | ConcertResponse | 위 PUT 응답과 같은 공연 기본정보 |
+| bookingAttemptCount | integer | STARTED/ENTERED가 있는 고유 (사용자, 시도, 공연) 그룹 수 |
+| bookingAttemptUserCount | integer | 위 시작 이벤트가 있는 고유 사용자 수 |
+
+```json
+{"concert":{"serviceId":"ticket-service-a","concertId":"c1","name":"BTS Concert","startsAt":"2026-12-01T10:00:00Z","endsAt":"2026-12-01T12:00:00Z","venue":"Seoul Hall"},"bookingAttemptCount":5,"bookingAttemptUserCount":3}
+```
+
+#### 4. Error
+
+| HTTP | code | 원인 |
+|---|---|---|
+| 400 | INVALID_REQUEST | serviceId 누락 또는 ID 형식 오류 |
+| 401 | UNAUTHORIZED | 인증 실패 |
+| 403 | FORBIDDEN | 일반 서비스 키 또는 권한 밖 서비스 |
+| 404 | CONCERT_NOT_FOUND | 권한 내 서비스에 해당 공연이 미등록 |
+| 500 | INTERNAL_SERVER_ERROR | DB 또는 내부 오류 |
+
+#### 5. Exception
+
+| 상황 | 처리 |
+|---|---|
+| 등록됐지만 이벤트 없음 | 200, 두 통계 모두 0 |
+| 후속 단계만 있고 시작 없음 | 해당 시도·사용자 집계 제외 |
+| 같은 시도의 여러 단계·중복 시작 | 시도는 1회. 같은 사용자의 여러 시도는 사용자 1명 |
+| BOOKING/CANCEL/CHECK_IN | 이 통계에서 제외 |
+| 다른 서비스 사용자에 잘못 연결된 이벤트 | 사용자 소속 서비스까지 검증하여 제외 |
+| 공연별 AI 점수·이상 사용자 수 | 현재 평가에 공연 ID/판정 라벨이 없어 산출하지 않음 |
+
+### GET /api/v1/admin/concerts/{concertId}/users — 공연별 사용자
+
+#### 1. Header
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| X-API-Key | O | 관리자 키 1개 |
+
+#### 2. Request
+
+Path Variable concertId는 공백 없는 1~50자이며 Body는 없습니다.
+
+| Query String | 타입 | 필수 | 조건 |
+|---|---|---|---|
+| serviceId | string | O | 공백 없는 1~50자, AdminScope 범위 내 |
+| page, size, sort | integer, integer, string | X | 기존 관리자 사용자 목록과 동일. 기본 0/20/createdAt,desc; size 1~100 |
+| userId, externalUserId | string | X | 정확 일치, 각각 1~50/1~100자 |
+| accountStatus | string | X | ACTIVE 또는 SUSPENDED |
+| tier | string | X | 정확 일치, 1~20자 |
+| minCreditScore, maxCreditScore | integer | X | 0~100, 최소 <= 최대 |
+| createdFrom, createdTo | string(datetime) | X | 사용자 등록일 필터. 기존 LocalDateTime, 하한 포함·상한 미포함 |
+
+정렬은 createdAt/userId/creditScore 및 asc/desc를 지원하고 userId로 동률 정렬합니다.
+모든 필터는 AND이며 공연 기간·사용자 활동 시각 필터와 최근 활동 기준 정렬은 제공하지 않습니다.
+
+`GET /api/v1/admin/concerts/c1/users?serviceId=ticket-service-a&minCreditScore=70&sort=creditScore,desc`
+
+#### 3. Response
+
+| data 필드 | 타입 | 설명 |
+|---|---|---|
+| content | ConcertUserResponse[] | 중복 제거한 사용자 목록 |
+| content[].user | AdminUserResponse | 기존 #35 관리자 사용자 DTO 재사용 |
+| user.userId / serviceId / externalUserId | string | BTS ID / 서비스 ID / 외부 사용자 ID |
+| user.accountStatus / tier | string | 계정 상태 / 현재 등급 |
+| user.createdAt | string(datetime) | 기존 사용자 생성 LocalDateTime |
+| user.creditScore | integer | user_credit의 현재 점수 |
+| user.anomalyScore | number/null | **공연별 점수가 아닌 사용자의 최신 전체 평가 점수** |
+| user.lastAssessedAt | string(datetime)/null | 최신 전체 평가의 기존 LocalDateTime |
+| content[].lastBookingAttemptAt | string(datetime) | 해당 공연 BOOKING_ATTEMPT의 최대 occurred_at, UTC Z |
+| page, size, totalElements, totalPages, hasNext | integer/boolean | 기존 PageResponse 구조 |
+
+```json
+{"content":[{"user":{"userId":"bts-uuid","serviceId":"ticket-service-a","externalUserId":"external-1","accountStatus":"ACTIVE","createdAt":"2026-11-01T10:00:00","creditScore":80,"tier":"BASE","anomalyScore":0.2,"lastAssessedAt":"2026-11-10T10:00:00"},"lastBookingAttemptAt":"2026-11-10T10:05:00Z"}],"page":0,"size":20,"totalElements":1,"totalPages":1,"hasNext":false}
+```
+
+#### 4. Error
+
+| HTTP | code | 원인 |
+|---|---|---|
+| 400 | INVALID_REQUEST | serviceId 누락, ID/페이지/정렬/검색조건 오류 |
+| 401 | UNAUTHORIZED | 인증 실패 |
+| 403 | FORBIDDEN | 일반 서비스 키 또는 권한 밖 서비스 |
+| 404 | CONCERT_NOT_FOUND | 미등록 공연 |
+| 500 | INTERNAL_SERVER_ERROR | 현재 Credit 누락(기존 목록 정합성 계약) 또는 DB/내부 오류 |
+
+#### 5. Exception
+
+| 상황 | 처리 |
+|---|---|
+| 같은 사용자 여러 시도·여러 이벤트 | DB의 EXISTS 조건으로 사용자 행 중복 방지 |
+| 시작 없는 사용자 | 제외 |
+| 평가 없음 | anomalyScore/lastAssessedAt null |
+| 조회 결과 없음·페이지 초과 | 200 및 빈 content |
+| 최근 활동 | 포함된 사용자의 해당 공연 모든 BOOKING_ATTEMPT 중 최대 발생 시각. sequence 최신 상태와 다른 개념 |
+| AI·Credit·정책 | 조회만 수행. 계산·평가·정책 생성을 호출하지 않음 |
+
+### 공통 처리 및 배포 주의
+
+- 모든 관리자 조회는 serviceId 필수이며 AdminScope로 검증합니다. 범위 밖 serviceId는 403입니다.
+- 서비스·공연 ID 비교는 바이트 기준으로 제한하여 다른 서비스/대소문자 변형이 혼입되지 않도록 합니다.
+- 이벤트 수집은 공연 등록 여부를 검사하지 않습니다. 미등록 공연 이벤트도 수집하고 등록 후 기존 이벤트를 연결합니다.
+- 조회는 MySQL REPEATABLE_READ 읽기 트랜잭션으로 처리하며 페이지 내 최신 평가·활동은 일괄 조회합니다.
+- 오류 메시지는 INVALID_REQUEST="요청 데이터가 올바르지 않습니다.", UNAUTHORIZED="인증이 필요합니다.",
+  FORBIDDEN="접근 권한이 없습니다.", CONCERT_NOT_FOUND="해당 공연을 찾을 수 없습니다.",
+  INTERNAL_SERVER_ERROR="서버 내부 오류가 발생했습니다."입니다. MVC의 405/406/415도 기존 공통 규칙을 따릅니다.
+- 신규 빈 DB는 schema.sql, 기존 DB는 `db/manual/038-create-concert.sql`만 검토 후 수동 적용합니다.
+- Demo Ticketing 연동 방법은 [공연 정보 연동 가이드](concert-integration.md)를 참고합니다.

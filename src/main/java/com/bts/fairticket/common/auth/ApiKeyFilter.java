@@ -42,6 +42,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     	}
 
 		return !path.equals("/api/v1/users") && !path.startsWith("/api/v1/users/")
+				&& !path.equals("/api/v1/concerts") && !path.startsWith("/api/v1/concerts/")
 				&& !path.equals("/api/v1/events") && !path.startsWith("/api/v1/events/")
 				&& !isAdminPath(path);
 	}

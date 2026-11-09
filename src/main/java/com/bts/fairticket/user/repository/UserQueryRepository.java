@@ -21,6 +21,10 @@ public class UserQueryRepository {
 	public UserQueryRepository(EntityManager em) { this.em = em; }
 
 	public PageResponse<UserResponse> find(UserQuery filter, Set<String> services) {
+		return find(filter, services, null);
+	}
+
+	public PageResponse<UserResponse> find(UserQuery filter, Set<String> services, String concertId) {
 		var page = QueryPage.parse(filter.page(), filter.size(), filter.sort(), Map.of(
 				"createdAt", "u.createdAt", "userId", "u.userId", "creditScore", "c.creditScore"),
 				"createdAt", "u.userId");
@@ -45,6 +49,18 @@ public class UserQueryRepository {
 		add(where, parameters, "maxCreditScore", "c.creditScore <=", filter.maxCreditScore());
 		add(where, parameters, "createdFrom", "u.createdAt >=", filter.createdFrom());
 		add(where, parameters, "createdTo", "u.createdAt <", filter.createdTo());
+		if (concertId != null) {
+			where.append(" ").append("""
+			    and exists (select e.eventId from BehaviorEvent e where e.user.userId = u.userId
+			    and e.serviceId = u.serviceId and function('hex', e.serviceId) = function('hex', u.serviceId)
+			    and e.eventType = 'BOOKING_ATTEMPT'
+			    and function('JSON_UNQUOTE', function('JSON_EXTRACT', e.metadata, '$.concertId')) = :concertId
+			    and function('hex', function('JSON_UNQUOTE', function('JSON_EXTRACT', e.metadata, '$.concertId'))) = function('hex', :concertId)
+			    and function('JSON_UNQUOTE', function('JSON_EXTRACT', e.metadata, '$.stage')) = 'STARTED'
+			    and function('JSON_UNQUOTE', function('JSON_EXTRACT', e.metadata, '$.status')) = 'ENTERED')
+			    """);
+			parameters.put("concertId", concertId);
+		}
 		String from = " from UserAccount u left join UserCredit c on c.userId = u.userId" + where;
 		var count = bind(em.createQuery("select count(u)" + from, Long.class), parameters);
 		if (services != null) ServiceScopeQuery.bind(count, services);
