@@ -97,7 +97,7 @@ class EventApiMySqlTests {
 	}
 
 	@ParameterizedTest
-	@EnumSource(EventType.class)
+	@EnumSource(value=EventType.class, names={"BOOKING","CANCEL","CHECK_IN"})
 	void savesAllTypesWithJsonAndExactOccurrenceTime(EventType type) throws Exception {
 		var request = request(type, UUID.randomUUID().toString());
 		String response = mvc.perform(post("/api/v1/events").header("X-API-Key", KEY_A)
@@ -138,7 +138,7 @@ class EventApiMySqlTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.code").value("COMMON_200"))
 				.andExpect(jsonPath("$.data.userId").value(internalId));
-		for (EventType type : EventType.values()) {
+		for (EventType type : new EventType[]{EventType.BOOKING,EventType.CANCEL,EventType.CHECK_IN}) {
 			var event = new EventRequest(SERVICE_A, "csv-flow-" + type, internalId, type,
 					type == EventType.CHECK_IN ? null : "booking-1",
 					type == EventType.CHECK_IN ? "ticket-1" : null,
@@ -359,4 +359,25 @@ class EventApiMySqlTests {
 		return jdbc.queryForObject("SELECT COUNT(*) FROM behavior_event WHERE service_id IN (?, ?)",
 				Integer.class, SERVICE_A, SERVICE_B);
 	}
+
+    @Autowired com.bts.fairticket.behavior.service.AttemptQueryService attempts;
+    @Test void attemptCountRequiresStartedAndProgressUsesSequenceNotArrival() throws Exception {
+        String attempt=UUID.randomUUID().toString();
+        var complete=new java.util.LinkedHashMap<String,Object>(Map.of("attemptId",attempt,"transitionId","complete",
+            "concertId","c1","stage","COMPLETED","status","SUCCEEDED","sequence",8,
+            "source","SERVER","recordedAt","2026-11-08T00:00:00Z","bookingId","b1"));
+        var last=new EventRequest(SERVICE_A,"attempt-last",userId,EventType.BOOKING_ATTEMPT,null,null,"2026-11-08T00:00:00Z",complete);
+        mvc.perform(post("/api/v1/events").header("X-API-Key",KEY_A).contentType("application/json").content(mapper.writeValueAsString(last))).andExpect(status().isCreated());
+        assertTrue(attempts.find(SERVICE_A,"c1",userId,0,20).isEmpty());
+        var start=new java.util.LinkedHashMap<String,Object>(complete);
+        start.put("transitionId","start");start.put("stage","STARTED");start.put("status","ENTERED");start.put("sequence",1);start.remove("bookingId");
+        var first=new EventRequest(SERVICE_A,"attempt-first",userId,EventType.BOOKING_ATTEMPT,null,null,"2026-11-08T00:00:00Z",start);
+        mvc.perform(post("/api/v1/events").header("X-API-Key",KEY_A).contentType("application/json").content(mapper.writeValueAsString(first))).andExpect(status().isCreated());
+        mvc.perform(post("/api/v1/events").header("X-API-Key",KEY_A).contentType("application/json").content(mapper.writeValueAsString(first))).andExpect(status().isOk());
+        var rows=attempts.find(SERVICE_A,"c1",userId,0,20);
+        assertEquals(1,rows.size());assertEquals("COMPLETED",rows.get(0).get("stage"));
+        assertEquals(8,((Number)rows.get(0).get("sequence")).intValue());
+        assertEquals(1,((Number)rows.get(0).get("bookingAttemptCount")).intValue());
+        assertTrue(attempts.find(SERVICE_B,"c1",userId,0,20).isEmpty());
+    }
 }

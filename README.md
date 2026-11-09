@@ -186,3 +186,26 @@ $env:BTS_API_KEY_HASHES = @{ 'ticket-service-a' = $keyHash } | ConvertTo-Json -C
 ```
 
 서비스 ID는 요청 본문의 `serviceId`와 일치해야 합니다. 다른 서비스의 사용자는 조회할 수 없습니다. 운영 요청에는 HTTPS를 사용하고 프록시에서도 인증 헤더 로깅을 비활성화합니다. 요청·응답·상태 코드는 [API 명세](docs/api-spec.md)에 정리되어 있습니다.
+
+## 사용자·관리자 조회 API
+
+서비스 키로 GET /api/v1/users 및 GET /api/v1/users/{userId}/events를 호출합니다. 사용자 목록은 현재 Credit을 포함하고 이벤트는 유형·UTC 기간 필터를 지원합니다. 기본 0번 페이지·20건, 최대 100건이며 정렬·필터·응답은 [API 명세](docs/api-spec.md)를 따릅니다. 기존 사용자 상세·등록·이벤트 수집 계약은 유지합니다.
+
+GET /api/v1/admin/users 및 GET /api/v1/dashboard/summary에는 별도 관리자 키가 필요합니다. 헤더는 동일한 X-API-Key이며 일반 서비스 키는 관리자 경로에서 403입니다. 관리자 키는 관리자 경로 전용이고 일반 사용자·이벤트 경로에서는 403입니다.
+
+서버 환경변수 BTS_ADMIN_API_KEYS를 JSON 배열로 설정합니다. 각 hash는 기존 서비스 키와 같은 SHA-256 방식으로 생성한 서로 다른 키의 해시입니다. 아래 값은 실제 64자리 해시로 교체해야 합니다.
+
+~~~json
+[
+  {"hash":"<서비스 관리자 키의 SHA-256>","allServices":false,"services":["ticket-service-a"]},
+  {"hash":"<전체 관리자 키의 SHA-256>","allServices":true,"services":[]}
+]
+~~~
+
+서비스 관리자는 허용 목록 전체를 기본 조회하며 serviceId로 범위 안의 하나를 선택할 수 있습니다. 전체 관리자는 기본 전체 서비스, serviceId 지정 시 해당 서비스만 조회합니다. 허용 범위 밖 선택은 403입니다. 미설정 또는 []이면 관리자 키 인증이 차단됩니다. 관리자·서비스 간 키 재사용, 중복 관리자 키, 빈 서비스 권한, 잘못된 해시는 시작 시 거부합니다. 전체 관리자만 allServices=true와 빈 services를 함께 사용합니다. 기존 .env를 덮어쓰지 않으며 Spring Boot는 .env를 자동 로드하지 않습니다. 환경변수 변경 후 애플리케이션을 재시작합니다. 키 원문과 인증 헤더를 로그에 기록하지 않습니다.
+
+대시보드는 실제 DB의 누적 사용자 상태·현재 Credit·이벤트 행을 집계합니다. AI 평가나 Credit 산출·변경을 실행하지 않습니다. 과거 이벤트의 KST/UTC 혼재는 기간 조회 정확성에 영향을 줄 수 있어 별도 확인이 필요합니다. DB 스키마·인덱스는 변경하지 않습니다.
+
+검증은 DB 없는 .\gradlew.bat test와 DB_* 설정 후 .\gradlew.bat mysqlTest로 실행합니다. 신규 MySQL 조회 테스트는 임의 서비스의 데이터를 트랜잭션에서 생성하고 롤백하며, 목록이 페이지당 두 쿼리로 동작하는지도 확인합니다. AUTO_INCREMENT 번호는 소비될 수 있습니다.
+
+로컬 MySQL 8 이미지와 Docker가 있다면 .\scripts\Test-QueryApis.ps1로 기존 DB·.env를 사용하지 않고 전체 test 및 mysqlTest를 실행할 수 있습니다. 스크립트는 임시 컨테이너에 기존 schema.sql을 적용하고 종료 시 해당 컨테이너만 정리합니다. 기존 컨테이너·DB·볼륨은 변경하지 않습니다.
