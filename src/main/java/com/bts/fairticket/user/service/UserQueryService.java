@@ -16,4 +16,7 @@ public class UserQueryService {
 	public PageResponse<UserResponse> find(UserQuery query, Set<String> services) {
 		return repository.find(query, services);
 	}
+	public PageResponse<UserResponse> findForConcert(UserQuery query, Set<String> services, String concertId) {
+		return repository.find(query, services, concertId);
+	}
 }

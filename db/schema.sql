@@ -145,3 +145,15 @@ ALTER TABLE `risk_assessment` ADD FOREIGN KEY (`user_id`) REFERENCES `user_accou
 ALTER TABLE `policy_decision` ADD FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`);
 
 ALTER TABLE `policy_decision` ADD FOREIGN KEY (`assessment_id`) REFERENCES `risk_assessment` (`assessment_id`);
+
+-- #38: external-service concert metadata. Existing databases: apply db/manual/038-create-concert.sql only.
+CREATE TABLE `concert` (
+  `id` bigint PRIMARY KEY AUTO_INCREMENT,
+  `service_id` varchar(50) COLLATE utf8mb4_bin NOT NULL,
+  `concert_id` varchar(50) COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `starts_at` datetime NOT NULL COMMENT 'UTC',
+  `ends_at` datetime NOT NULL COMMENT 'UTC',
+  `venue` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE UNIQUE INDEX `concert_service_concert` ON `concert` (`service_id`, `concert_id`);

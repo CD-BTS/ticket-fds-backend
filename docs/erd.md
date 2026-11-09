@@ -10,6 +10,22 @@
 | credit_history | CreditHistory / credit | history_id BIGINT AUTO_INCREMENT |
 | risk_assessment | RiskAssessment / risk | assessment_id BIGINT AUTO_INCREMENT |
 | policy_decision | PolicyDecision / policy | decision_id BIGINT AUTO_INCREMENT |
+| concert | Concert / concert | id BIGINT AUTO_INCREMENT; UNIQUE(service_id, concert_id) |
+
+## 공연 기본정보 (#38)
+
+공연은 외부 서비스가 PUT으로 등록·갱신하는 조회용 복제 정보입니다. 원본 DB에 직접 연결하지 않습니다.
+concert는 service_id와 concert_id를 utf8mb4_bin으로 비교하는 복합 UNIQUE로 식별합니다.
+name(200), starts_at/ends_at(UTC DATETIME 초 단위), venue(255)를 저장합니다.
+이벤트와 FK를 연결하지 않으므로 미등록 공연의 이벤트도 기존 수집 계약대로 저장할 수 있습니다.
+공연 등록 후 동일한 서비스·metadata.concertId의 기존 이벤트가 자동으로 조회·집계 대상이 됩니다.
+
+기존 DB에는 `db/manual/038-create-concert.sql`만 검토 후 1회 수동 적용합니다.
+전체 schema.sql은 신규 빈 DB 전용이며 기존 DB에 재실행하지 않습니다.
+이 작업에서는 실제 개발 DB에 SQL을 적용하지 않습니다.
+concert의 쓰기·조회는 원자적 upsert와 집계 SQL을 위해 JDBC Repository를 사용하며 Entity는 스키마 매핑 검증에 사용합니다.
+기존 Credit의 booking_history/user_card DDL은 utf8mb4_unicode_ci를 명시하므로 신규 빈 DB의 기본 collation도
+동일해야 사용자 FK가 호환됩니다. 격리 테스트 서버에만 이 기본값을 지정하며 기존 DB 설정은 변경하지 않습니다.
 
 각 Entity의 `repository` 패키지에 기본 `JpaRepository`를 제공합니다. dashboard는 별도 테이블과 Entity가 없습니다.
 

@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class EntitySchemaMappingTests {
 
 	private static final Pattern TABLE_PATTERN = Pattern.compile(
-			"CREATE TABLE `(\\w+)` \\((.*?)\\);", Pattern.DOTALL);
+			"CREATE TABLE `(\\w+)` \\((.*?)\\)(?: ENGINE[^;]*)?;", Pattern.DOTALL);
 	private static final Pattern COLUMN_PATTERN = Pattern.compile(
 			"^`(\\w+)` (varchar\\(\\d+\\)|bigint|int|double|datetime|json)(.*)$");
 	private static final Pattern INDEX_PATTERN = Pattern.compile(
@@ -41,7 +41,8 @@ class EntitySchemaMappingTests {
 			"ALTER TABLE `(\\w+)` ADD FOREIGN KEY \\(`(\\w+)`\\) REFERENCES `(\\w+)` \\(`(\\w+)`\\);");
 	private static final List<Class<?>> ENTITIES = List.of(
 			UserAccount.class, BehaviorEvent.class, UserCredit.class,
-			CreditHistory.class, RiskAssessment.class, PolicyDecision.class);
+			CreditHistory.class, RiskAssessment.class, PolicyDecision.class,
+			com.bts.fairticket.concert.entity.Concert.class);
 
 	@Test
 	void mappingsMatchProvidedMySqlSchemaWithoutDatabaseConnection() throws Exception {
@@ -94,8 +95,8 @@ class EntitySchemaMappingTests {
 				}
 				assertEquals(columnCount, columns.size(), tableName + " columns");
 			}
-			assertEquals(6, tableCount);
-			assertEquals(6, tables.size());
+			assertEquals(7, tableCount);
+			assertEquals(7, tables.size());
 
 			Map<String, String> expectedIndexes = new TreeMap<>();
 			var indexMatcher = INDEX_PATTERN.matcher(sql);

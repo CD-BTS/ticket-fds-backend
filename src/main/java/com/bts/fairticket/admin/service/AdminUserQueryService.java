@@ -43,7 +43,14 @@ public class AdminUserQueryService {
     }
 
     public PageResponse<AdminUserResponse> find(UserQuery query, AdminScope scope) {
-        var page = users.find(query, scope.restrict(query.serviceId()));
+        return enrich(users.find(query, scope.restrict(query.serviceId())));
+    }
+
+    public PageResponse<AdminUserResponse> findForConcert(UserQuery query, AdminScope scope, String concertId) {
+        return enrich(users.findForConcert(query, scope.restrict(query.serviceId()), concertId));
+    }
+
+    private PageResponse<AdminUserResponse> enrich(PageResponse<com.bts.fairticket.user.dto.UserResponse> page) {
         Map<String, RiskAssessment> latest = page.content().isEmpty() ? Map.of() : assessments
                 .findLatestForUsers(page.content().stream().map(user -> user.userId()).toList()).stream()
                 .collect(Collectors.toMap(a -> a.getUser().getUserId(), Function.identity()));
