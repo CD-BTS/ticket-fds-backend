@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({UserQueryController.class, AdminUserController.class, DashboardController.class})
-@Import({ApiKeyConfiguration.class, GlobalExceptionHandler.class})
+@Import({ApiKeyConfiguration.class, GlobalExceptionHandler.class, com.bts.fairticket.admin.service.AdminUserQueryService.class})
 class QueryControllerTests {
 	private static final String SERVICE_KEY = ApiKeyTestSupport.randomKey();
 	private static final String ADMIN = ApiKeyTestSupport.randomKey();
@@ -43,11 +43,17 @@ class QueryControllerTests {
 	@MockitoBean UserQueryService users;
 	@MockitoBean UserEventQueryService events;
 	@MockitoBean DashboardQueryService dashboard;
+	@MockitoBean com.bts.fairticket.user.service.UserService details;
+	@MockitoBean com.bts.fairticket.user.repository.UserAccountRepository accounts;
+	@MockitoBean com.bts.fairticket.risk.repository.RiskAssessmentRepository assessments;
+	@MockitoBean com.bts.fairticket.policy.repository.PolicyDecisionRepository policies;
+	@MockitoBean com.bts.fairticket.admin.repository.AdminAssessmentQueryRepository history;
 
 	@Test
 	void authenticationCoversAllNewRoutesAndNormalizesPaths() throws Exception {
 		for (String path : List.of("/api/v1/users", "/api/v1/users/id/events", "/api/v1/admin/users",
-				"/api/v1/dashboard/summary", "/api/v1/admin/users;x=1", "/api/v1/dashboard/summary;x=1")) {
+				"/api/v1/dashboard/summary", "/api/v1/admin/users/id", "/api/v1/admin/users/id/events",
+				"/api/v1/admin/users/id/assessments", "/api/v1/admin/users;x=1", "/api/v1/dashboard/summary;x=1")) {
 			mvc.perform(get(path)).andExpect(status().isUnauthorized()).andExpect(jsonPath("code").value("UNAUTHORIZED"));
 			mvc.perform(get(path).header("X-API-Key", "wrong")).andExpect(status().isUnauthorized());
 			mvc.perform(get(path).header("X-API-Key", SERVICE_KEY, SERVICE_KEY)).andExpect(status().isUnauthorized());
@@ -90,5 +96,24 @@ class QueryControllerTests {
 		mvc.perform(get("/api/v1/users/id/events").param("from", "2026-01-01T00:00:00").header("X-API-Key", SERVICE_KEY))
 				.andExpect(status().isBadRequest());
 		verifyNoInteractions(users, events, dashboard);
+	}
+
+	@Test
+	void adminRoutesEnforceScopeBeforeQueryingAndValidateParameters() throws Exception {
+		when(accounts.findById("foreign")).thenReturn(java.util.Optional.of(
+				new com.bts.fairticket.user.entity.UserAccount("foreign", "c", "external")));
+		for (String suffix : List.of("", "/events", "/assessments")) {
+			mvc.perform(get("/api/v1/admin/users/foreign" + suffix).header("X-API-Key", ADMIN))
+					.andExpect(status().isNotFound()).andExpect(jsonPath("code").value("USER_NOT_FOUND"));
+			mvc.perform(get("/api/v1/admin/users/missing" + suffix).header("X-API-Key", ADMIN))
+					.andExpect(status().isNotFound());
+			mvc.perform(get("/api/v1/admin/users/foreign" + suffix).header("X-API-Key", SERVICE_KEY))
+					.andExpect(status().isForbidden());
+		}
+		mvc.perform(get("/api/v1/admin/users/id/events").header("X-API-Key", ADMIN).param("eventType", "INVALID"))
+				.andExpect(status().isBadRequest());
+		mvc.perform(get("/api/v1/admin/users/id/assessments").header("X-API-Key", ADMIN).param("page", "abc"))
+				.andExpect(status().isBadRequest());
+		verifyNoInteractions(details, events, history, policies);
 	}
 }

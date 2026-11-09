@@ -330,7 +330,10 @@ X-API-Key를 유지하며 별도 환경변수 BTS_ADMIN_API_KEYS를 설정합니
 
 ## GET /api/v1/admin/users
 
-관리자 키 전용이며 content는 UserResponse입니다. 상세 API를 사용자별로 반복 호출하지 않습니다.
+관리자 키 전용이며 content는 AdminUserResponse입니다. 기존 UserResponse의 모든 필드를 유지하고
+anomalyScore(number/null), lastAssessedAt(LocalDateTime/null)를 추가합니다. 평가가 없으면 두 값은 null입니다.
+최신 평가는 assessedAt 내림차순, 동률이면 assessmentId 내림차순으로 선택합니다.
+기존 목록 쿼리와 페이지 내 사용자 전체의 최신 평가 일괄 조회를 사용하며 상세 API를 사용자별로 반복 호출하지 않습니다.
 
 | 조건 | 규칙 |
 |---|---|
@@ -373,3 +376,71 @@ data 예시:
 이상 사용자 수는 임계값·최신 평가 기준의 별도 합의가 필요하여 포함하지 않습니다. 별도 테이블·Entity·스키마·인덱스 변경은 없습니다. 사용자 복합 정렬과 대시보드 대량 집계는 운영 데이터 규모에서 실행 계획 확인이 필요합니다.
 
 등록 기간 조건은 MySQL DATETIME 범위인 1000~9999년을 사용합니다.
+
+## 관리자 사용자 상세 및 이력 조회 (#35)
+
+모든 경로는 기존 관리자 `X-API-Key`를 사용합니다. 일반 서비스 키는 403,
+키 누락/오류는 401입니다. `userId`는 공백 불가, 최대 50자입니다.
+존재하지 않는 사용자와 관리자 허용 서비스 범위 밖 사용자는 동일한 404 / USER_NOT_FOUND입니다.
+전체 관리자는 모든 서비스의 사용자에 접근할 수 있습니다. 조회는 평가·정책 생성이나 Credit 갱신을 실행하지 않습니다.
+
+### GET /api/v1/admin/users/{userId}
+
+쿼리 파라미터는 없습니다. `data`는 `AdminUserDetailResponse`입니다.
+
+```json
+{
+  "user": {
+    "userId": "bts-user-uuid", "serviceId": "ticket-service-a", "externalUserId": "external-123",
+    "accountStatus": "ACTIVE", "createdAt": "2026-11-01T10:00:00", "creditScore": 70, "tier": "BASE",
+    "anomalyScore": 0.3, "lastAssessedAt": "2026-11-10T10:00:00", "latestAction": "ALLOW"
+  },
+  "latestPolicy": {
+    "decisionId": 10, "userId": "bts-user-uuid", "context": "QUEUE_JOIN",
+    "creditScore": 70, "anomalyScore": 0.3, "action": "ALLOW", "reason": "정상 사용자 판정",
+    "decidedAt": "2026-11-10T10:01:00+09:00"
+  }
+}
+```
+
+`user`는 기존 UserDetailResponse와 동일합니다. `latestPolicy`는 기존 PolicyDecisionResponse이며
+정책 생성 당시 점수의 스냅샷을 포함합니다. 정책이 없으면 null입니다.
+최신 평가와 최신 정책은 독립적으로 선택되므로 서로 다른 평가를 참조할 수 있습니다.
+현재 Credit 누락 시 기존 상세 계약과 동일하게 500입니다.
+사용자·평가 시각은 기존 LocalDateTime, 정책 시각은 기존 KST 오프셋 형식을 유지합니다.
+
+### GET /api/v1/admin/users/{userId}/events
+
+`page,size,sort,eventType,from,to` 및 응답은 기존 일반 사용자 이벤트 조회와 동일합니다.
+`eventType`은 BOOKING/CANCEL/CHECK_IN/BOOKING_ATTEMPT입니다.
+기간은 UTC 정규화 후 `from <= occurredAt < to`이며, 오프셋이 필수입니다.
+기본 정렬은 occurredAt,desc이고 occurredAt/eventId 정렬을 허용하며 ID로 동률 정렬합니다.
+`data`는 `PageResponse<EventResponse>`입니다. 조건에 맞는 이력이 없으면 빈 content를 반환합니다.
+
+### GET /api/v1/admin/users/{userId}/assessments
+
+| 파라미터 | 규칙 |
+|---|---|
+| page | 0부터 시작, 기본 0 |
+| size | 기본 20, 1~100 |
+| sort | assessedAt / assessmentId / anomalyScore 중 하나와 asc / desc. 기본 assessedAt,desc |
+
+동률은 assessmentId를 같은 방향으로 정렬합니다. 잘못된 정렬·페이지·offset 범위는 400 / INVALID_REQUEST입니다.
+`data`는 `PageResponse<AssessmentResponse>`이며 예시는 다음과 같습니다.
+
+```json
+{
+  "content": [{"assessmentId": 5, "anomalyScore": 0.3, "policyAction": "ALLOW",
+    "modelVersion": "iforest-v1", "assessedAt": "2026-11-10T10:00:00"}],
+  "page": 0, "size": 20, "totalElements": 1, "totalPages": 1, "hasNext": false
+}
+```
+
+`anomalyScore`는 저장된 이상 탐지 점수를 그대로 반환합니다. DB에는 정상/이상 판정 라벨이 없으며 임의의 AI 판정 등급을 생성하지 않습니다.
+`policyAction`은 **같은 사용자와 해당 평가에 연결된 최신 정책의 action**으로, AI 판정과 구분되는 정책 대응 결과입니다.
+decidedAt 내림차순, 동률이면 decisionId 내림차순으로 선택하며 연결 정책이 없으면 null입니다.
+이는 AI의 이진 판정값이 아니며 새 임계값을 적용하지 않습니다. 모델 판정 라벨이 필요하면 별도 계약 합의가 필요합니다.
+이력이 없거나 마지막 페이지를 초과하면 200 및 빈 content를 반환합니다.
+
+기존 일반 사용자 API의 DTO와 Demo Ticketing 계약은 변경하지 않습니다.
+Credit 전용 두 API의 Bearer 형식 검사 및 서비스 범위 검증 누락은 이번 변경 대상에서 제외했으며 별도 보완이 필요합니다.
