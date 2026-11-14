@@ -1,6 +1,6 @@
 # ERD 및 JPA 매핑
 
-기준은 [db/schema.sql](../db/schema.sql)의 MySQL 8.0 DDL입니다. 스키마는 수동으로 적용하며 Flyway, Hibernate 자동 생성 및 Spring SQL 자동 초기화를 사용하지 않습니다. 기본 `ddl-auto=none`을 유지합니다.
+기준은 [db/schema.sql](../backend/db/schema.sql)의 MySQL 8.0 DDL입니다. 스키마는 수동으로 적용하며 Flyway, Hibernate 자동 생성 및 Spring SQL 자동 초기화를 사용하지 않습니다. 기본 `ddl-auto=none`을 유지합니다.
 
 | 테이블 | Entity / 도메인 | PK |
 | --- | --- | --- |
