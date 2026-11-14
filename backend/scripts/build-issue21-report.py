@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-OUT = ROOT / 'docs/issue21-artifacts'
+OUT = ROOT / '../docs/issue21-artifacts'
 OUT.mkdir(parents=True, exist_ok=True)
 def read(path):
     return json.loads((ROOT / path).read_text(encoding='utf-8-sig'))
@@ -26,7 +26,7 @@ def f(value):
 def table(head, rows):
     return '\n'.join(['| ' + ' | '.join(head) + ' |', '|' + '|'.join(['---'] * len(head)) + '|'] + ['| ' + ' | '.join(map(str, row)) + ' |' for row in rows])
 
-curated = 'docs/issue21-artifacts/baseline-metrics.json'
+curated = '../docs/issue21-artifacts/baseline-metrics.json'
 raw_paths = ['load-tests/results.json', 'load-tests/issue21-stress-comparison.json', 'load-tests/issue21-spike-baseline.json', 'load-tests/issue21-spike2-analysis.json']
 if all((ROOT / path).exists() for path in raw_paths):
     low = read(raw_paths[0])
@@ -111,9 +111,9 @@ requirements = [
     ['단일 서버 처리 한계·주요 병목 분석','완료(범위 제한)','500에서 연결 거부, 1,000에서 메모리 보호 중단. 독립 부하 발생기·MySQL 계측 없이 서버 고유 한계 확정 불가.'],
     ['Redis 대기열 전 기준 데이터','완료(탐색적 Baseline)','집계 지표·조건·관찰 한계·입력 파일 해시를 저장. Redis 효과나 필요성을 증명한 결과는 아님.'],
 ]
-audit_path = 'docs/issue21-artifacts/git-security-audit.json'
+audit_path = '../docs/issue21-artifacts/git-security-audit.json'
 audit = read(audit_path) if (ROOT/audit_path).exists() else {}
-save('docs/issue21-artifacts/requirement-audit.json',{'source':bundle['issueUrl'],'title':bundle['issueTitle'],'readDate':'2026-10-27','remoteState':'open','requirements':requirements,'closureRecommendation':'HOLD: missing MySQL direct telemetry and 200/300/400 DB evidence; maintainer acceptance needed for scope exceptions and 1000 VU early stop.'})
+save('../docs/issue21-artifacts/requirement-audit.json',{'source':bundle['issueUrl'],'title':bundle['issueTitle'],'readDate':'2026-10-27','remoteState':'open','requirements':requirements,'closureRecommendation':'HOLD: missing MySQL direct telemetry and 200/300/400 DB evidence; maintainer acceptance needed for scope exceptions and 1000 VU early stop.'})
 
 stress_rows = [[r['vus'],'#18 과거 / 60s',r['attempts'],f(r['startedRps']),'—',f(r['averageMs']),f(r['p95Ms']),f(r['successPercent']),f(r['errorPercent']),'미별도집계'] for r in legacy]
 for r in stress:
@@ -236,5 +236,5 @@ body += [
     '- HTML: `load-tests/issue21-stress-{300,400,500,1000}-dashboard.html`, `issue21-spike-dashboard.html`, `issue21-spike2-dashboard.html` (기본 Git 제외 권고).',
     '- `python scripts/build-issue21-report.py`는 저장된 값만 읽어 본 문서·정제 JSON·PNG를 재생성한다. raw가 없으면 정제 JSON을 사용한다. Matplotlib이 필요하며 이번 작업용 패키지는 Git 제외된 `.env.issue21-report-tools/`에만 설치했다. k6/DB/API를 호출하지 않는다.', '',
 ]
-(ROOT/'docs/issue21-final-load-test-report.md').write_text('\n'.join(body),encoding='utf-8')
+(ROOT/'../docs/issue21-final-load-test-report.md').write_text('\n'.join(body),encoding='utf-8')
 print('Built final Markdown, curated metrics, requirement audit and 2 PNG charts; no workload/DB/API calls.')
