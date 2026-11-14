@@ -1,0 +1,258 @@
+﻿{
+    "runs":  [
+                 {
+                     "vus":  200,
+                     "runId":  "b6536e3d-f6a4-4a3f-9f49-da299e3a732f",
+                     "attempts":  5678,
+                     "created":  5678,
+                     "plannedRps":  189.26666666666668,
+                     "actualRps":  184.46509496926163,
+                     "averageMs":  1067.8893394152908,
+                     "p95Ms":  2004.992965,
+                     "successPercent":  100,
+                     "errorPercent":  0,
+                     "networkFailures":  0,
+                     "httpFailures":  0,
+                     "createdRps":  189.26666666666668,
+                     "thresholdPassed":  true,
+                     "stoppedEarly":  false,
+                     "completedRequests":  5678,
+                     "actualSeconds":  30.7808911
+                 },
+                 {
+                     "vus":  300,
+                     "runId":  "d7670ad9-e74a-4323-aa99-fded01c09d19",
+                     "attempts":  8378,
+                     "created":  8378,
+                     "plannedRps":  279.26666666666665,
+                     "actualRps":  270.73364309359624,
+                     "averageMs":  1085.7132992002867,
+                     "p95Ms":  1531.02393,
+                     "successPercent":  100,
+                     "errorPercent":  0,
+                     "networkFailures":  0,
+                     "httpFailures":  0,
+                     "createdRps":  279.26666666666665,
+                     "thresholdPassed":  true,
+                     "stoppedEarly":  false,
+                     "completedRequests":  8378,
+                     "actualSeconds":  30.9455445,
+                     "htmlJsonMatch":  true,
+                     "htmlRps":  268.62,
+                     "resources":  {
+                                       "samples":  11,
+                                       "firstSampleSeconds":  1.0358171,
+                                       "lastSampleSeconds":  29.4618899,
+                                       "exitCode":  null,
+                                       "serverCpuPercent":  {
+                                                                "average":  16.419326054720084,
+                                                                "maximum":  20.253203040378441
+                                                            },
+                                       "serverWorkingSetMiB":  {
+                                                                   "average":  145.45987215909091,
+                                                                   "maximum":  149.19921875
+                                                               },
+                                       "serverPrivateMiB":  {
+                                                                "average":  372.58700284090907,
+                                                                "maximum":  372.875
+                                                            },
+                                       "systemCpuPercent":  {
+                                                                "average":  95.181818181818187,
+                                                                "maximum":  100
+                                                            },
+                                       "systemUsedMemoryMiB":  {
+                                                                   "average":  7531.5234375,
+                                                                   "maximum":  7736.796875
+                                                               }
+                                   }
+                 },
+                 {
+                     "vus":  400,
+                     "runId":  "62ea94d5-f972-41bb-b90b-9e995a879da4",
+                     "attempts":  5909,
+                     "created":  5909,
+                     "plannedRps":  196.96666666666667,
+                     "actualRps":  186.18760288704405,
+                     "averageMs":  2074.652166948722,
+                     "p95Ms":  3389.8701199999996,
+                     "successPercent":  100,
+                     "errorPercent":  0,
+                     "networkFailures":  0,
+                     "httpFailures":  0,
+                     "createdRps":  196.96666666666667,
+                     "thresholdPassed":  true,
+                     "stoppedEarly":  false,
+                     "completedRequests":  5909,
+                     "actualSeconds":  31.7368069,
+                     "htmlJsonMatch":  true,
+                     "htmlRps":  185.27,
+                     "resources":  {
+                                       "samples":  8,
+                                       "firstSampleSeconds":  3.9127783999999997,
+                                       "lastSampleSeconds":  28.876999899999998,
+                                       "exitCode":  0,
+                                       "serverCpuPercent":  {
+                                                                "average":  12.584514681416168,
+                                                                "maximum":  18.559964499842842
+                                                            },
+                                       "serverWorkingSetMiB":  {
+                                                                   "average":  121.69482421875,
+                                                                   "maximum":  127.6484375
+                                                               },
+                                       "serverPrivateMiB":  {
+                                                                "average":  372.50830078125,
+                                                                "maximum":  372.83203125
+                                                            },
+                                       "systemCpuPercent":  {
+                                                                "average":  96.25,
+                                                                "maximum":  100
+                                                            },
+                                       "systemUsedMemoryMiB":  {
+                                                                   "average":  7483.76904296875,
+                                                                   "maximum":  7573.66015625
+                                                               }
+                                   }
+                 },
+                 {
+                     "vus":  500,
+                     "runId":  "4f8fbf55-c380-412f-b2cc-f0c0325e1120",
+                     "attempts":  10253,
+                     "created":  9991,
+                     "plannedRps":  341.76666666666665,
+                     "actualRps":  319.37378242833796,
+                     "averageMs":  1499.3546890373514,
+                     "p95Ms":  2040.4124,
+                     "successPercent":  97.4446503462401200,
+                     "errorPercent":  2.555349653759875200,
+                     "networkFailures":  262,
+                     "httpFailures":  0,
+                     "createdRps":  333.03333333333336,
+                     "thresholdPassed":  false,
+                     "stoppedEarly":  false,
+                     "completedRequests":  10253,
+                     "actualSeconds":  32.1034492,
+                     "htmlJsonMatch":  true,
+                     "htmlRps":  317.49,
+                     "resources":  {
+                                       "samples":  17,
+                                       "firstSampleSeconds":  1.0599498,
+                                       "lastSampleSeconds":  28.7154815,
+                                       "exitCode":  99,
+                                       "serverCpuPercent":  {
+                                                                "average":  18.758861914272028,
+                                                                "maximum":  23.464159617169958
+                                                            },
+                                       "serverWorkingSetMiB":  {
+                                                                   "average":  177.90808823529412,
+                                                                   "maximum":  185.7109375
+                                                               },
+                                       "serverPrivateMiB":  {
+                                                                "average":  432.45036764705884,
+                                                                "maximum":  436.25
+                                                            },
+                                       "systemCpuPercent":  {
+                                                                "average":  91.3529411764706,
+                                                                "maximum":  100
+                                                            },
+                                       "systemUsedMemoryMiB":  {
+                                                                   "average":  7447.68221507353,
+                                                                   "maximum":  7502.3359375
+                                                               },
+                                       "k6CpuPercent":  {
+                                                            "average":  5.624059350677558,
+                                                            "maximum":  27.087072897225887
+                                                        },
+                                       "k6WorkingSetMiB":  {
+                                                               "average":  242.77826286764707,
+                                                               "maximum":  264.9453125
+                                                           }
+                                   }
+                 },
+                 {
+                     "vus":  1000,
+                     "runId":  "48d87476-3e28-4d24-b35d-ac35f071b4ab",
+                     "attempts":  4213,
+                     "created":  2496,
+                     "plannedRps":  null,
+                     "actualRps":  239.4423362658439,
+                     "averageMs":  2782.705744617299,
+                     "p95Ms":  4591.98227,
+                     "successPercent":  77.660236465463600,
+                     "errorPercent":  22.33976353453640300,
+                     "networkFailures":  718,
+                     "httpFailures":  0,
+                     "createdRps":  null,
+                     "thresholdPassed":  false,
+                     "stoppedEarly":  true,
+                     "completedRequests":  3214,
+                     "actualSeconds":  13.422856,
+                     "htmlJsonMatch":  true,
+                     "htmlRps":  235.16,
+                     "resources":  {
+                                       "samples":  5,
+                                       "firstSampleSeconds":  1.5024179,
+                                       "lastSampleSeconds":  13.0512488,
+                                       "exitCode":  103,
+                                       "serverCpuPercent":  {
+                                                                "average":  12.135244213921155,
+                                                                "maximum":  14.060610439882309
+                                                            },
+                                       "serverWorkingSetMiB":  {
+                                                                   "average":  205.621875,
+                                                                   "maximum":  220.25390625
+                                                               },
+                                       "serverPrivateMiB":  {
+                                                                "average":  436.3953125,
+                                                                "maximum":  436.80078125
+                                                            },
+                                       "systemCpuPercent":  {
+                                                                "average":  96.8,
+                                                                "maximum":  100
+                                                            },
+                                       "systemUsedMemoryMiB":  {
+                                                                   "average":  7754.175,
+                                                                   "maximum":  7878.02734375
+                                                               },
+                                       "k6CpuPercent":  {
+                                                            "average":  8.6795904833894859,
+                                                            "maximum":  27.1697458476766
+                                                        },
+                                       "k6WorkingSetMiB":  {
+                                                               "average":  401.596875,
+                                                               "maximum":  423.1328125
+                                                           }
+                                   }
+                 }
+             ],
+    "verifiedFiles":  [
+                          "load-tests/results-stress-200-b6536e3d-f6a4-4a3f-9f49-da299e3a732f.md",
+                          "load-tests/results-stress-200-b6536e3d-f6a4-4a3f-9f49-da299e3a732f.json",
+                          "load-tests/results-stress-300-d7670ad9-e74a-4323-aa99-fded01c09d19.md",
+                          "load-tests/results-stress-300-d7670ad9-e74a-4323-aa99-fded01c09d19.json",
+                          "load-tests/issue21-stress-300-dashboard.html",
+                          "load-tests/results-stress-300-d7670ad9-e74a-4323-aa99-fded01c09d19.resources.csv",
+                          "load-tests/results-stress-300-d7670ad9-e74a-4323-aa99-fded01c09d19.resources.json",
+                          "load-tests/results-stress-400-62ea94d5-f972-41bb-b90b-9e995a879da4.md",
+                          "load-tests/results-stress-400-62ea94d5-f972-41bb-b90b-9e995a879da4.json",
+                          "load-tests/issue21-stress-400-dashboard.html",
+                          "load-tests/results-stress-400-62ea94d5-f972-41bb-b90b-9e995a879da4.resources.csv",
+                          "load-tests/results-stress-400-62ea94d5-f972-41bb-b90b-9e995a879da4.resources.json",
+                          "load-tests/results-stress-500-4f8fbf55-c380-412f-b2cc-f0c0325e1120.md",
+                          "load-tests/results-stress-500-4f8fbf55-c380-412f-b2cc-f0c0325e1120.json",
+                          "load-tests/issue21-stress-500-dashboard.html",
+                          "load-tests/results-stress-500-4f8fbf55-c380-412f-b2cc-f0c0325e1120.resources.csv",
+                          "load-tests/results-stress-500-4f8fbf55-c380-412f-b2cc-f0c0325e1120.resources.json",
+                          "load-tests/results-stress-1000-48d87476-3e28-4d24-b35d-ac35f071b4ab.md",
+                          "load-tests/results-stress-1000-48d87476-3e28-4d24-b35d-ac35f071b4ab.json",
+                          "load-tests/issue21-stress-1000-dashboard.html",
+                          "load-tests/results-stress-1000-48d87476-3e28-4d24-b35d-ac35f071b4ab.resources.csv",
+                          "load-tests/results-stress-1000-48d87476-3e28-4d24-b35d-ac35f071b4ab.resources.json"
+                      ],
+    "notes":  [
+                  "Planned RPS includes graceful completions divided by 30 seconds; actualRps uses k6 elapsed time. Dashboard RPS has its own reporting interval and can differ.",
+                  "HTML metrics match JSON within dashboard rounding (0.1 ms latency tolerance).",
+                  "Resources use samples in the first 30 seconds after process launch, including startup; dashboard shutdown waiting is excluded. One second sleep plus Windows CIM collection overhead means actual intervals exceed one second. CPU percentages are normalized to the whole machine (8 logical CPUs).",
+                  "200 VU resource measurements are unavailable. 300 VU exit code was not captured; its process exited and all thresholds passed.",
+                  "No existing DB records were updated/deleted and no server tuning changed; normal test POST requests and authentication probes created test events. Sequential single runs cannot establish a reproducible server limit; system saturation and shared load-generator resources affect comparison."
+              ]
+}

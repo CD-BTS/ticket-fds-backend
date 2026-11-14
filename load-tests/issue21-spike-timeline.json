@@ -1,0 +1,299 @@
+{
+  "runId": "7e3352c8-b82d-4034-8048-6f250fa5d430",
+  "spikePlan": [
+    {
+      "name": "baseline",
+      "start": 0,
+      "end": 10,
+      "seconds": 10,
+      "from": 50,
+      "to": 50
+    },
+    {
+      "seconds": 1,
+      "from": 50,
+      "to": 500,
+      "name": "surge",
+      "start": 10,
+      "end": 11
+    },
+    {
+      "name": "peak",
+      "start": 11,
+      "end": 21,
+      "seconds": 10,
+      "from": 500,
+      "to": 500
+    },
+    {
+      "to": 50,
+      "name": "decline",
+      "start": 21,
+      "end": 22,
+      "seconds": 1,
+      "from": 500
+    },
+    {
+      "name": "recovery",
+      "start": 22,
+      "end": 42,
+      "seconds": 20,
+      "from": 50,
+      "to": 50
+    }
+  ],
+  "timeline": [
+    {
+      "second": 0,
+      "min": 14,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 1,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 2,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 3,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 4,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 5,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 6,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 7,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 8,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 9,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 10,
+      "min": 51,
+      "median": 270.5,
+      "max": 498
+    },
+    {
+      "second": 11,
+      "min": 499,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 12,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 13,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 14,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 15,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 16,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 17,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 18,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 19,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 20,
+      "min": 500,
+      "median": 500,
+      "max": 500
+    },
+    {
+      "second": 21,
+      "min": 64,
+      "median": 394,
+      "max": 500
+    },
+    {
+      "second": 22,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 23,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 24,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 25,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 26,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 27,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 28,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 29,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 30,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 31,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 32,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 33,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 34,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 35,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 36,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 37,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 38,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 39,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 40,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    },
+    {
+      "second": 41,
+      "min": 50,
+      "median": 50,
+      "max": 50
+    }
+  ]
+}
