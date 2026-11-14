@@ -31,8 +31,10 @@
 
 ```bash
 git clone https://github.com/CD-BTS/ticket-fds-backend.git
-cd ticket-fds-backend
+cd ticket-fds-backend/backend
 ```
+
+이 문서의 모든 명령은 저장소의 `backend/` 폴더에서 실행합니다. 관리자 대시보드는 [frontend/README.md](../frontend/README.md)를 참고하세요.
 
 JDK 17을 설치하고 IDE의 Gradle toolchain 또는 `JAVA_HOME`을 설정합니다. Gradle을 Java 21로 실행하더라도 컴파일·테스트에는 선언된 JDK 17 toolchain이 별도로 필요합니다. JDK가 검색되지 않으면 로컬 Gradle 설정의 `org.gradle.java.installations.paths`에 설치 경로를 지정합니다. Wrapper 및 의존성의 최초 다운로드에는 인터넷 연결이 필요합니다.
 
@@ -58,7 +60,7 @@ if (-not (Test-Path -LiteralPath .env)) {
 
 ### 3. MySQL 실행
 
-기존 Docker 구성은 MySQL 8.0, DB `fairticket_db`, 계정 `user`, 호스트 포트 `3306`입니다. 이미 실행 중인 컨테이너는 그대로 사용합니다. 실행이 필요한 경우 Docker Desktop 또는 Docker 데몬을 실행한 뒤 기존 프로젝트 루트에서 아래 명령을 사용합니다.
+기존 Docker 구성은 MySQL 8.0, DB `fairticket_db`, 계정 `user`, 호스트 포트 `3306`입니다. 이미 실행 중인 컨테이너는 그대로 사용합니다. 실행이 필요한 경우 Docker Desktop 또는 Docker 데몬을 실행한 뒤 `backend/` 폴더에서 아래 명령을 사용합니다.
 
 ```powershell
 docker compose up -d mysql
